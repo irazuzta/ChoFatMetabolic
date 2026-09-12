@@ -1,0 +1,11 @@
+<resources>
+    <strings>
+        <string id="AppName">CHO/FAT Metabolic</string>
+
+        <string id="TitlePes">Weight (kg) — 0 = use watch value</string>
+        <string id="TitleFcRepos">Resting HR (bpm) — 0 = use watch value</string>
+        <string id="TitleFcMax">Max HR (bpm) — 0 = estimate from zones</string>
+        <string id="TitleLt2">LT2 Threshold (bpm) — 0 = estimate from zone 4 ceiling (approx.)</string>
+        <string id="TitleVo2max">VO2max (ml/kg/min) — 0 = use watch value</string>
+    </strings>
+</resources>

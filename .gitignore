@@ -1,0 +1,8 @@
+# Claus de signatura del developer - mai al repo
+keys/
+
+# Sortides de compilacio (.prg, .iq, mir intermedi...)
+bin/
+
+# Config local de Claude Code
+.claude/settings.local.json

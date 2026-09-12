@@ -1,0 +1,23 @@
+<resources>
+    <settings>
+        <setting propertyKey="@Properties.pesManualKg" title="@Strings.TitlePes">
+            <settingConfig type="numeric" min="0" max="200"/>
+        </setting>
+
+        <setting propertyKey="@Properties.fcReposManual" title="@Strings.TitleFcRepos">
+            <settingConfig type="numeric" min="0" max="120"/>
+        </setting>
+
+        <setting propertyKey="@Properties.fcMaxManual" title="@Strings.TitleFcMax">
+            <settingConfig type="numeric" min="0" max="230"/>
+        </setting>
+
+        <setting propertyKey="@Properties.lt2Manual" title="@Strings.TitleLt2">
+            <settingConfig type="numeric" min="0" max="230"/>
+        </setting>
+
+        <setting propertyKey="@Properties.vo2maxManual" title="@Strings.TitleVo2max">
+            <settingConfig type="numeric" min="0" max="90"/>
+        </setting>
+    </settings>
+</resources>

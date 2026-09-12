@@ -1,0 +1,14 @@
+<resources>
+    <properties>
+        <!--
+          Totes a 0 per defecte = "mode automàtic": l'app intenta llegir-ho
+          del rellotge (perfil d'usuari / zones de FC). Si l'usuari hi posa
+          un valor > 0 des de Garmin Connect, aquest val sempre més.
+        -->
+        <property id="pesManualKg" type="float">0.0</property>
+        <property id="fcReposManual" type="number">0</property>
+        <property id="fcMaxManual" type="number">0</property>
+        <property id="lt2Manual" type="number">0</property>
+        <property id="vo2maxManual" type="float">0.0</property>
+    </properties>
+</resources>
