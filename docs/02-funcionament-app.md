@@ -44,10 +44,15 @@ coherència: si `FCmax` no queda per sobre de `FCrepòs`, o si `LT2` no queda en
 es corregeix automàticament (mai es deixa que valors absurds trenquin silenciosament
 el càlcul de HRR/RER més endavant).
 
-Els altres dos punts de referència del model de RER (document teòric §6) — $LT_1$ i el
-punt de "sortida del repòs" $I_{onset}$ — es calculen directament a `compute()` com a
-fraccions de `lt2`, amb les constants `PCT_LT1 = 0.85` i
-`PCT_ACTIVACIO_CHO = 0.70`.
+El punt de "sortida del repòs" $I_{onset}$ (document teòric §6) es calcula sempre com
+a fracció de `lt2`, amb la constant `PCT_ACTIVACIO_CHO = 0.70` — no té equivalent de
+laboratori, així que no s'ofereix com a valor manual (§6 del document teòric).
+
+$LT_1$, en canvi, sí és un llindar fisiològic real que un esportista pot conèixer
+d'una prova pròpia, així que segueix el mateix patró que la resta del perfil: si
+l'usuari en introdueix un valor manual (`lt1Manual`, propietat > 0) i queda coherent
+(entre `fcRepos` i `lt2`), es fa servir directament; si no, es descarta en silenci i
+es torna a l'estimació `PCT_LT1 * lt2` (`PCT_LT1 = 0.85`).
 
 ## 3. Cicle de càlcul (`compute()`)
 

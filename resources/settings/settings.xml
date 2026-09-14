@@ -16,6 +16,10 @@
             <settingConfig type="numeric" min="0" max="230"/>
         </setting>
 
+        <setting propertyKey="@Properties.lt1Manual" title="@Strings.TitleLt1">
+            <settingConfig type="numeric" min="0" max="230"/>
+        </setting>
+
         <setting propertyKey="@Properties.vo2maxManual" title="@Strings.TitleVo2max">
             <settingConfig type="numeric" min="0" max="90"/>
         </setting>

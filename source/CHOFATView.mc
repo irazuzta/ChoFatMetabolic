@@ -64,6 +64,7 @@ class CHOFATView extends WatchUi.DataField {
     hidden var fcMax as Lang.Number = 185;
     hidden var lt2 as Lang.Number = 165;
     hidden var vo2max as Lang.Float = 50.0;
+    hidden var lt1Fixat as Lang.Number = 0; // 0 = no fixat, s'estima com a PCT_LT1*lt2
 
     // --- Paràmetres del model metabòlic (calibrats per a esportistes de fons,
     //     mateixos valors que la versió d'escriptori) ---
@@ -195,6 +196,16 @@ class CHOFATView extends WatchUi.DataField {
         if (lt2 <= fcRepos || lt2 >= fcMax) {
             lt2 = (fcRepos + 0.85 * (fcMax - fcRepos)).toNumber();
         }
+
+        // 6) LT1 manual (opcional): només es fa servir si queda coherent
+        //    entre FC repòs i LT2; si no, es torna a l'estimació automàtica
+        //    PCT_LT1*lt2 (veure compute()).
+        var lt1Manual = Application.Properties.getValue("lt1Manual") as Lang.Number?;
+        if (lt1Manual != null && lt1Manual > fcRepos && lt1Manual < lt2) {
+            lt1Fixat = lt1Manual;
+        } else {
+            lt1Fixat = 0;
+        }
     }
 
     // ------------------------------------------------------------------
@@ -261,7 +272,7 @@ class CHOFATView extends WatchUi.DataField {
         var vo2LMin = (vo2RelatiuActual * pesKg) / 1000.0;
 
         // --- RER interpolat per zones de FC (mateix model que l'app d'escriptori) ---
-        var lt1Bpm = PCT_LT1 * lt2;
+        var lt1Bpm = (lt1Fixat > 0) ? lt1Fixat.toFloat() : PCT_LT1 * lt2;
         var puntActivacioCho = PCT_ACTIVACIO_CHO * lt2;
         var rer;
 

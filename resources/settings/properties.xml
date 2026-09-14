@@ -9,6 +9,7 @@
         <property id="fcReposManual" type="number">0</property>
         <property id="fcMaxManual" type="number">0</property>
         <property id="lt2Manual" type="number">0</property>
+        <property id="lt1Manual" type="number">0</property>
         <property id="vo2maxManual" type="float">0.0</property>
     </properties>
 </resources>

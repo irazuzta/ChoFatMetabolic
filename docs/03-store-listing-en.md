@@ -46,6 +46,12 @@ from your Garmin profile to personalize the calculation. If you know your own
 physiological numbers (max heart rate, lactate threshold, VO2max), you can enter them
 manually in the app settings for even more accurate results.
 
+Tip: for best accuracy, set up your Garmin heart rate zones using the **Lactate
+Threshold** method instead of %HRmax — modern Garmin watches estimate your lactate
+threshold automatically during running/cycling activities (or you can enter it
+manually). This app estimates your anaerobic threshold from your zone 4 ceiling, so
+zones based on lactate threshold line up much more closely with the real value.
+
 **A note on accuracy**
 
 This app provides an estimate based on established exercise science models, calibrated
