@@ -6,3 +6,7 @@ bin/
 
 # Config local de Claude Code
 .claude/settings.local.json
+
+# Zensical: entorn virtual i build de la web de docs
+.venv/
+site/
