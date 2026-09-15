@@ -1,8 +1,8 @@
 # Estimació de l'oxidació de carbohidrats i greixos a partir de la freqüència cardíaca: un model pràctic
 
-Aquest document descriu, de manera autocontinguda, un model per estimar la taxa
-d'oxidació de carbohidrats (CHO) i de greix (FAT) durant l'exercici a partir d'una
-única variable mesurable de forma no invasiva: la freqüència cardíaca (FC). Es
+Aquest document descriu un model per estimar la taxa d'oxidació de carbohidrats
+(CHO) i de greix (FAT) durant l'exercici a partir d'una única variable mesurable
+de forma no invasiva: la freqüència cardíaca (FC). Es
 presenten la fisiologia i les matemàtiques del model amb les seves referències
 científiques, deduint-lo pas a pas des de l'objectiu fins a la seva forma final.
 

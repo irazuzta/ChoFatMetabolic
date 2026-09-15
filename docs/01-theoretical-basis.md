@@ -1,8 +1,8 @@
 # Estimating carbohydrate and fat oxidation from heart rate: a practical model
 
-This document describes, in a self-contained way, a model for estimating the
-oxidation rate of carbohydrate (CHO) and fat (FAT) during exercise from a single,
-non-invasively measurable variable: heart rate (HR). The physiology and mathematics
+This document describes a model for estimating the oxidation rate of carbohydrate
+(CHO) and fat (FAT) during exercise from a single, non-invasively measurable
+variable: heart rate (HR). The physiology and mathematics
 of the model are presented together with their scientific references, deriving it
 step by step from the objective to its final form.
 

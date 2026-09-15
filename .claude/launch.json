@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "docs-site",
+      "runtimeExecutable": ".venv/Scripts/zensical.exe",
+      "runtimeArgs": ["serve"],
+      "port": 8000
+    }
+  ]
+}
