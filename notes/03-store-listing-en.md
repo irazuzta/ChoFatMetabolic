@@ -62,6 +62,10 @@ Tip: fat burning naturally takes a few minutes to ramp up at the start of exerci
 readings in the first 10-20 minutes will lean more toward carbs than later in the
 session — a short warm-up beforehand can reduce this delay.
 
+**Want the details?** Full documentation — a plain-language user guide plus the
+underlying science and references — is available at
+https://irazuzta.github.io/ChoFatMetabolic/
+
 ## Additional Information
 
 **Source Code URL**: `https://github.com/irazuzta/ChoFatMetabolic`
