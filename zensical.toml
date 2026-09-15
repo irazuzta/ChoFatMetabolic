@@ -1,13 +1,11 @@
 [project]
-# site_url: actualitza-ho quan es publiqui a GitHub Pages (p.ex.
-# https://<usuari>.github.io/<repo>/)
-site_url = "https://www.example.com/"
+site_url = "https://irazuzta.github.io/ChoFatMetabolic/"
 site_name = "CHO/FAT Metabolic"
 site_description = "Technical documentation for the CHO/FAT Metabolic data field for Garmin Connect IQ"
 
-# repo_url = "https://github.com/user/repo"
-# repo_name = "user/repo"
-# edit_uri = "edit/main/docs/"
+repo_url = "https://github.com/irazuzta/ChoFatMetabolic"
+repo_name = "irazuzta/ChoFatMetabolic"
+edit_uri = "edit/master/docs/"
 
 nav = [
   { "Home" = "index.md" },
