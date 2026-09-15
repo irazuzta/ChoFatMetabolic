@@ -49,9 +49,6 @@ touch them if you know the real value and want more accuracy.
 
 ## 4. How to edit them manually
 
-**Note**: this only works if you installed the app from the Connect IQ Store
-(not if you sideloaded it manually onto the watch).
-
 1. Open the **Garmin Connect** app on your phone.
 2. Go to your watch → **Connect IQ Store** (or **My Apps**).
 3. Find "CHO/FAT Metabolic" and open it.
