@@ -4,6 +4,9 @@ Technical documentation for the **CHO/FAT Metabolic** data field for Garmin Conn
 IQ: it estimates carbohydrate and fat oxidation in real time during exercise from
 heart rate alone.
 
+- **[User guide](03-user-guide.md)** — a plain-language explanation of what the
+  data field shows and how to configure it. Start here if you just want to use
+  the app.
 - **[Theoretical basis](01-theoretical-basis.md)** — the estimation model itself:
   equations, parameters, scientific references. A self-contained document,
   independent of any implementation detail.

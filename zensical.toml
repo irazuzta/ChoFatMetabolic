@@ -10,6 +10,7 @@ copyright = "Licensed under GPLv3"
 
 nav = [
   { "Home" = "index.md" },
+  { "User guide" = "03-user-guide.md" },
   { "Theoretical basis" = "01-theoretical-basis.md" },
   { "How the app works" = "02-app-implementation.md" },
 ]
