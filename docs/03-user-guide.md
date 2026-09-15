@@ -49,11 +49,12 @@ touch them if you know the real value and want more accuracy.
 
 ## 4. How to edit them manually
 
-1. Open the **Garmin Connect** app on your phone.
-2. Go to your watch → **Connect IQ Store** (or **My Apps**).
-3. Find "CHO/FAT Metabolic" and open it.
-4. Tap **Settings/Configure** and enter any values you know.
-5. Leave any parameter at **0** if you want it to keep being estimated
+1. Open the **Garmin Connect** app on your phone (go to your watch →
+   **Connect IQ Store** or **My Apps**) — or, just as well, open the standalone
+   **Connect IQ Store** app or website directly.
+2. Find "CHO/FAT Metabolic" and open it.
+3. Tap **Settings/Configure** and enter any values you know.
+4. Leave any parameter at **0** if you want it to keep being estimated
    automatically.
 
 ## 5. What the colors mean
