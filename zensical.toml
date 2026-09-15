@@ -6,6 +6,7 @@ site_description = "Technical documentation for the CHO/FAT Metabolic data field
 repo_url = "https://github.com/irazuzta/ChoFatMetabolic"
 repo_name = "irazuzta/ChoFatMetabolic"
 edit_uri = "edit/master/docs/"
+copyright = "Licensed under GPLv3"
 
 nav = [
   { "Home" = "index.md" },
