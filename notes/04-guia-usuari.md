@@ -51,9 +51,9 @@ coneixes el valor real i vols més precisió.
 
 ## 4. Com editar-los manualment
 
-1. Obre l'app **Garmin Connect** al mòbil (ves al teu rellotge → **Connect IQ
-   Store** o **My Apps**) — o, igual de vàlid, obre directament l'app o web
-   independent de la **Connect IQ Store**.
+1. Obre directament l'app **Connect IQ Store** — o, igual de vàlid, obre l'app
+   **Garmin Connect** i ves al teu rellotge → **Connect IQ Store** (o
+   **My Apps**).
 2. Busca "CHO/FAT Metabolic" i entra-hi.
 3. Toca **Settings/Configure** i introdueix els valors que coneguis.
 4. Deixa a **0** qualsevol paràmetre que vulguis que es continuï estimant
