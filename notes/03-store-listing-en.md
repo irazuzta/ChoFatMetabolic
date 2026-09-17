@@ -17,7 +17,7 @@ may adjust it over time.)
 
 CHO/FAT Metabolic is a Data Field that estimates, second by second, how many grams of
 carbohydrate and fat your body is burning during exercise — using only your heart
-rate. No extra sensors, no manual logging.
+rate. No extra sensors, no manual logging. Works on watches and Edge bike computers.
 
 **What you see on screen**
 - **CHO (g)** — total carbohydrate burned so far this session.

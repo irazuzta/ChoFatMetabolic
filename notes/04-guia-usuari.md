@@ -44,10 +44,15 @@ coneixes el valor real i vols més precisió.
 |---|---|---|
 | **Weight** | El teu pes corporal | Es llegeix del teu perfil de Garmin |
 | **Resting HR** | La teva freqüència cardíaca en repòs total | Es llegeix del teu perfil de Garmin |
-| **Max HR** | La teva freqüència cardíaca màxima | S'agafa el sostre de la zona 5 configurada al rellotge |
-| **LT2 Threshold** | El teu llindar anaeròbic (la intensitat a partir de la qual comences a acumular fatiga ràpidament) | S'agafa el sostre de la zona 4 configurada al rellotge |
+| **Max HR** | La teva freqüència cardíaca màxima | S'agafa el sostre de la zona 5 configurada per al teu esport actual (córrer, ciclisme...) |
+| **LT2 Threshold** | El teu llindar anaeròbic (la intensitat a partir de la qual comences a acumular fatiga ràpidament) | S'agafa el sostre de la zona 4 configurada per al teu esport actual |
 | **LT1 Threshold** | El teu llindar aeròbic (una mica per sota de l'anterior) | Es calcula com el 85% del LT2 |
-| **VO2max** | La teva capacitat aeròbica màxima | Es llegeix del teu perfil de Garmin (estimació de córrer) |
+| **VO2max** | La teva capacitat aeròbica màxima | Es llegeix del teu perfil de Garmin — l'estimació de córrer o de ciclisme, segons l'activitat actual |
+
+En un rellotge Garmin, l'"esport actual" sol ser Córrer; en una **bicicleta
+computadora Edge**, és Ciclisme — el camp fa servir automàticament les teves
+zones i l'estimació de VO2max de ciclisme en aquest cas, sense cap configuració
+addicional.
 
 ## 4. Com editar-los manualment
 

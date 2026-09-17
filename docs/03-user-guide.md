@@ -42,10 +42,14 @@ touch them if you know the real value and want more accuracy.
 |---|---|---|
 | **Weight** | Your body weight | Read from your Garmin profile |
 | **Resting HR** | Your heart rate at complete rest | Read from your Garmin profile |
-| **Max HR** | Your maximum heart rate | Taken from the ceiling of zone 5 configured on the watch |
-| **LT2 Threshold** | Your anaerobic threshold (the intensity above which you start accumulating fatigue quickly) | Taken from the ceiling of zone 4 configured on the watch |
+| **Max HR** | Your maximum heart rate | Taken from the ceiling of zone 5 configured for your current sport (running, cycling...) |
+| **LT2 Threshold** | Your anaerobic threshold (the intensity above which you start accumulating fatigue quickly) | Taken from the ceiling of zone 4 configured for your current sport |
 | **LT1 Threshold** | Your aerobic threshold (a bit below the previous one) | Calculated as 85% of LT2 |
-| **VO2max** | Your maximum aerobic capacity | Read from your Garmin profile (running estimate) |
+| **VO2max** | Your maximum aerobic capacity | Read from your Garmin profile — the running or cycling estimate, matching your current activity |
+
+On a Garmin watch, "current sport" is usually Running; on an **Edge bike
+computer**, it's Cycling — the field automatically uses your cycling zones and
+cycling VO2max estimate in that case, no extra setup needed.
 
 ## 4. How to edit them manually
 

@@ -2,7 +2,8 @@
 
 A Garmin Connect IQ **Data Field** that estimates, in real time, how many grams of
 carbohydrate (CHO) and fat (FAT) the body is oxidizing during exercise — from heart
-rate alone. No extra sensors, no manual logging.
+rate alone. No extra sensors, no manual logging. Works on watches and Edge bike
+computers.
 
 📖 **Documentation**: [irazuzta.github.io/ChoFatMetabolic](https://irazuzta.github.io/ChoFatMetabolic/)
 ⌚ **Get it on the Connect IQ Store**: [apps.garmin.com](https://apps.garmin.com/es-ES/apps/d1d623e2-36e9-42c9-a673-fb37d8e8830e)

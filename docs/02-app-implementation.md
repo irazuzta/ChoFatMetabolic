@@ -11,7 +11,9 @@ focuses on how the code is organized and why each engineering decision was made.
 
 It is a Connect IQ **Data Field** (not an app or a widget): it can only be added
 as a field within an activity's data screen (Run, Bike, etc.), it does not appear
-in the watch's app list. It is written in Monkey C and implemented entirely in the
+in the watch's app list. It works on both watches and Edge bike computers — the
+manifest declares the compatible products, and the code adapts to each device's
+screen shape (§4.2). It is written in Monkey C and implemented entirely in the
 `CHOFATView` class, which Garmin instantiates once when the activity starts and
 updates at two different moments:
 
@@ -42,10 +44,20 @@ mode.
 
 For `HRmax` and `LT2`, since Garmin does not expose them directly (see §5 of the
 theoretical document), they are inferred from the watch's `getHeartRateZones()`:
-zone 5 ceiling → HRmax, zone 4 ceiling → LT2. At the end of `carregarPerfil()`
-there is a coherence check: if `HRmax` does not end up above `HRrest`, or if `LT2`
-does not end up in between, it is corrected automatically (absurd values are
-never allowed to silently break the HRR/RER calculation later on).
+zone 5 ceiling → HRmax, zone 4 ceiling → LT2. This call is already aware of the
+current sport (`UserProfile.getCurrentSport()`), so on an Edge bike computer it
+correctly reads the **cycling** zones, not the running ones. At the end of
+`carregarPerfil()` there is a coherence check: if `HRmax` does not end up above
+`HRrest`, or if `LT2` does not end up in between, it is corrected automatically
+(absurd values are never allowed to silently break the HRR/RER calculation later
+on).
+
+The automatic `VO2max` is also sport-aware: Garmin stores running VO2max
+(`profile.vo2maxRunning`) and cycling VO2max (`profile.vo2maxCycling`)
+separately — the app picks one or the other depending on whether the current
+sport is `Activity.SPORT_CYCLING` (a real bug found while testing Edge support:
+always reading `vo2maxRunning` meant an Edge would always fall back to the
+default value, since a bike computer never produces a running VO2max).
 
 The "onset of exercise" point $I_{onset}$ (theoretical document §6) is always
 calculated as a fraction of `lt2`, with the constant `PCT_ACTIVACIO_CHO = 0.70` —
@@ -120,6 +132,13 @@ safe_width = 2 · √(radius² - edge_distance²)
 
 and all the columns of that row are calculated based on this safe width, not on
 the screen's total width.
+
+**Rectangular-screen devices (Edge)**: this chord calculation only makes sense on
+round or semi-round screens — a rectangular screen has no curved bezel clipping
+anything, and applying the same formula would leave unnecessary margins.
+`calcularGeometria()` queries `System.getDeviceSettings().screenShape` once and
+stores it in `esRodona`; `amplaSeguraFila()` checks it and, on a non-round
+device, simply returns 96% of the total width with no chord calculation at all.
 
 ### 4.3. Adaptive font size (`ajustaFont`)
 

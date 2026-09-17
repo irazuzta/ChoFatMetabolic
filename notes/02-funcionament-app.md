@@ -10,7 +10,9 @@ el codi i per què s'ha pres cada decisió d'enginyeria.
 
 És un **Data Field** de Connect IQ (no una app ni un widget): només es pot afegir com a
 camp dins d'una pantalla de dades d'una activitat (Córrer, Bici, etc.), no apareix a la
-llista d'apps del rellotge. Està escrit en Monkey C i implementat íntegrament a la
+llista d'apps del rellotge. Funciona tant en rellotges com en bicicletes computadores
+Edge — el manifest declara els productes compatibles, i el codi s'adapta a la forma de
+pantalla de cada dispositiu (§4.2). Està escrit en Monkey C i implementat íntegrament a la
 classe `CHOFATView`, que Garmin instancia un cop en començar l'activitat i actualitza
 en dos moments diferents:
 
@@ -39,10 +41,20 @@ mode automàtic.
 
 Per a `FCmax` i `LT2`, com que Garmin no els exposa directament (veure §5 del document
 teòric), es dedueixen del `getHeartRateZones()` del rellotge: sostre de zona 5 → FCmax,
-sostre de zona 4 → LT2. Al final de `carregarPerfil()` hi ha una comprovació de
-coherència: si `FCmax` no queda per sobre de `FCrepòs`, o si `LT2` no queda entremig,
-es corregeix automàticament (mai es deixa que valors absurds trenquin silenciosament
-el càlcul de HRR/RER més endavant).
+sostre de zona 4 → LT2. Aquesta crida ja és sensible a l'esport actual
+(`UserProfile.getCurrentSport()`), així que en un dispositiu Edge (bicicleta
+computadora) agafa correctament les zones de **ciclisme** configurades, no les de
+córrer. Al final de `carregarPerfil()` hi ha una comprovació de coherència: si `FCmax`
+no queda per sobre de `FCrepòs`, o si `LT2` no queda entremig, es corregeix
+automàticament (mai es deixa que valors absurds trenquin silenciosament el càlcul de
+HRR/RER més endavant).
+
+El `VO2max` automàtic també és sensible a l'esport: Garmin guarda per separat el
+VO2max de córrer (`profile.vo2maxRunning`) i el de ciclisme (`profile.vo2maxCycling`)
+— es tria l'un o l'altre segons si l'esport actual és `Activity.SPORT_CYCLING` (bug
+real detectat durant les proves amb Edge: llegir sempre `vo2maxRunning` feia que un
+Edge caigués sempre al valor per defecte, ja que una bicicleta computadora mai genera
+un VO2max de córrer).
 
 El punt de "sortida del repòs" $I_{onset}$ (document teòric §6) es calcula sempre com
 a fracció de `lt2`, amb la constant `PCT_ACTIVACIO_CHO = 0.70` — no té equivalent de
@@ -113,6 +125,13 @@ amplada_segura = 2 · √(radi² - distancia_extrem²)
 
 i totes les columnes d'aquella fila es calculen sobre aquesta amplada seguraa, no sobre
 l'amplada total de la pantalla.
+
+**Dispositius de pantalla rectangular (Edge)**: aquest càlcul de corda només té sentit
+en pantalles rodones o semi-rodones — en una pantalla rectangular no hi ha cap bisell
+corbat que talli res, i aplicar-hi la mateixa fórmula deixaria marges innecessaris. A
+`calcularGeometria()` es consulta un sol cop `System.getDeviceSettings().screenShape`
+i es guarda a `esRodona`; `amplaSeguraFila()` el consulta i, si el dispositiu no és
+rodó, simplement retorna el 96% de l'amplada total sense cap càlcul de corda.
 
 ### 4.3. Mida de font adaptativa (`ajustaFont`)
 
