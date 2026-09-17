@@ -102,6 +102,7 @@ class CHOFATView extends WatchUi.DataField {
     hidden var geomCalculada as Lang.Boolean = false;
     hidden var geomWidth as Lang.Number = -1;
     hidden var geomHeight as Lang.Number = -1;
+    hidden var esRodona as Lang.Boolean = true;
 
     hidden var filaCY as Lang.Array = [0, 0, 0];
     hidden var filaRowH as Lang.Array = [0, 0, 0];
@@ -400,6 +401,11 @@ class CHOFATView extends WatchUi.DataField {
     // pel bisell.
     // ------------------------------------------------------------------
     function amplaSeguraFila(width as Lang.Number, height as Lang.Number, cy as Lang.Number, rowH as Lang.Number) as Lang.Number {
+        if (!esRodona) {
+            // Pantalla rectangular (p.ex. Edge): no hi ha bisell corbat que
+            // talli res — es fa servir tota l'amplada, amb un marge petit.
+            return (width * 0.96).toNumber();
+        }
         var radi = width / 2.0;
         var centreY = height / 2.0;
         var distanciaExtrem = (cy - centreY).abs() + (rowH / 2.0);
@@ -433,6 +439,9 @@ class CHOFATView extends WatchUi.DataField {
     // una activitat normal).
     // ------------------------------------------------------------------
     function calcularGeometria(dc as Graphics.Dc, width as Lang.Number, height as Lang.Number) as Void {
+        var forma = System.getDeviceSettings().screenShape;
+        esRodona = (forma == System.SCREEN_SHAPE_ROUND || forma == System.SCREEN_SHAPE_SEMI_ROUND);
+
         var topH = (height / 3.0).toNumber();
         var botH = (height / 3.0).toNumber();
         var midH = height - topH - botH;

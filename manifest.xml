@@ -33,6 +33,9 @@
             <iq:product id="epix2pro42mm"/>
             <iq:product id="epix2pro47mm"/>
             <iq:product id="epix2pro51mm"/>
+            <iq:product id="edge540"/>
+            <iq:product id="edge840"/>
+            <iq:product id="edge1050"/>
             <iq:product id="fenix5plus"/>
             <iq:product id="fenix5splus"/>
             <iq:product id="fenix5xplus"/>
