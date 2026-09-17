@@ -86,6 +86,10 @@ https://irazuzta.github.io/ChoFatMetabolic/
 Added compatibility with Garmin Edge bike computers — a small adaptation of the
 original running-focused model to also work for cycling, using your cycling HR
 zones and VO2max automatically. No changes to the underlying calculation.
+
+Also added guidance for cyclists on setting your anaerobic threshold (LT2)
+manually, since Garmin doesn't auto-detect lactate threshold for cycling the
+way it does for running — see the description above and the user guide.
 ```
 
 ## Additional Information
