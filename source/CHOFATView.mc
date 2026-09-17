@@ -161,12 +161,16 @@ class CHOFATView extends WatchUi.DataField {
             }
         }
 
-        // 3) VO2max (estimat pel rellotge per a córrer, si no hi ha manual)
+        // 3) VO2max (estimat pel rellotge, si no hi ha manual). Garmin guarda
+        //    per separat el VO2max de córrer i el de ciclisme — cal triar el
+        //    que correspongui a l'esport actual (rellevant sobretot en
+        //    dispositius Edge, on el de córrer sempre seria null).
+        var sport = UserProfile.getCurrentSport();
         var vo2Manual = Application.Properties.getValue("vo2maxManual") as Lang.Float?;
         if (vo2Manual != null && vo2Manual > 0.0) {
             vo2max = vo2Manual;
         } else if (profile != null) {
-            var vo2Perfil = profile.vo2maxRunning;
+            var vo2Perfil = (sport == Activity.SPORT_CYCLING) ? profile.vo2maxCycling : profile.vo2maxRunning;
             if (vo2Perfil != null) {
                 vo2max = vo2Perfil.toFloat();
             }
@@ -176,7 +180,6 @@ class CHOFATView extends WatchUi.DataField {
         //    les zones de FC configurades/estimades pel rellotge. Fem servir
         //    el sostre de zona 5 com a FCmax i el sostre de zona 4 com a LT2.
         //    (Array retornat per getHeartRateZones: [min1,max1,max2,max3,max4,max5])
-        var sport = UserProfile.getCurrentSport();
         var zones = UserProfile.getHeartRateZones(sport);
         if (zones != null) {
             zonesFC = zones;

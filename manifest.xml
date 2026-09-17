@@ -36,6 +36,16 @@
             <iq:product id="edge540"/>
             <iq:product id="edge840"/>
             <iq:product id="edge1050"/>
+            <iq:product id="edge130plus"/>
+            <iq:product id="edge530"/>
+            <iq:product id="edge550"/>
+            <iq:product id="edge830"/>
+            <iq:product id="edge1030"/>
+            <iq:product id="edge1030plus"/>
+            <iq:product id="edge1030bontrager"/>
+            <iq:product id="edge1040"/>
+            <iq:product id="edgeexplore2"/>
+            <iq:product id="edgemtb"/>
             <iq:product id="fenix5plus"/>
             <iq:product id="fenix5splus"/>
             <iq:product id="fenix5xplus"/>
