@@ -52,6 +52,16 @@ threshold automatically during running/cycling activities (or you can enter it
 manually). This app estimates your anaerobic threshold from your zone 4 ceiling, so
 zones based on lactate threshold line up much more closely with the real value.
 
+**Why your anaerobic threshold (LT2) matters most**
+
+Of all the numbers the app uses, your anaerobic/lactate threshold (LT2) has by far
+the biggest impact on accuracy. The app's whole carb/fat curve is anchored to it:
+your aerobic threshold and the point where carb burning starts ramping up are both
+calculated as a percentage of LT2, not set independently. If you only enter one
+value manually, make it this one — from a lab test, a field test (e.g. the heart
+rate during an FTP effort for cyclists), or a well-configured Lactate Threshold
+zone on your Garmin profile.
+
 **A note on accuracy**
 
 This app provides an estimate based on established exercise science models, calibrated
@@ -65,6 +75,14 @@ session — a short warm-up beforehand can reduce this delay.
 **Want the details?** Full documentation — a plain-language user guide plus the
 underlying science and references — is available at
 https://irazuzta.github.io/ChoFatMetabolic/
+
+## What's New (this version)
+
+```
+Added compatibility with Garmin Edge bike computers — a small adaptation of the
+original running-focused model to also work for cycling, using your cycling HR
+zones and VO2max automatically. No changes to the underlying calculation.
+```
 
 ## Additional Information
 
