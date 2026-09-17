@@ -1,6 +1,6 @@
-# CHO/FAT Metabolic
+# CHO/FAT Metabolic Pro
 
-Technical documentation for the **CHO/FAT Metabolic** data field for Garmin Connect
+Technical documentation for the **CHO/FAT Metabolic Pro** data field for Garmin Connect
 IQ: it estimates carbohydrate and fat oxidation in real time during exercise from
 heart rate alone.
 

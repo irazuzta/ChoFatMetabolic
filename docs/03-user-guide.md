@@ -30,7 +30,7 @@ it. If you want to know how everything is calculated under the hood, see
 2. Press and hold the "Menu" button / swipe to access the activity's options.
 3. Look for **"Edit Data Screens"** or similar, and pick a screen.
 4. Select the field you want to replace and, under the **Connect IQ** field
-   category, pick **"CHO/FAT Metabolic"**.
+   category, pick **"CHO/FAT Metabolic Pro"**.
 
 ## 3. Your profile parameters
 
@@ -56,7 +56,7 @@ cycling VO2max estimate in that case, no extra setup needed.
 1. Open the **Connect IQ Store** app directly — or, just as well, open the
    **Garmin Connect** app and go to your watch → **Connect IQ Store** (or
    **My Apps**).
-2. Find "CHO/FAT Metabolic" and open it.
+2. Find "CHO/FAT Metabolic Pro" and open it.
 3. Tap **Settings/Configure** and enter any values you know.
 4. Leave any parameter at **0** if you want it to keep being estimated
    automatically.

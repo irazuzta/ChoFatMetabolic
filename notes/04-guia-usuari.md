@@ -32,7 +32,7 @@ com els pots configurar. Si vols saber com es calcula tot per dins, mira
    l'activitat.
 3. Busca **"Edit Data Screens"** o similar, i tria una pantalla.
 4. Selecciona el camp que vulguis substituir i, dins la categoria de camps de
-   **Connect IQ**, tria **"CHO/FAT Metabolic"**.
+   **Connect IQ**, tria **"CHO/FAT Metabolic Pro"**.
 
 ## 3. Els paràmetres del teu perfil
 
@@ -59,7 +59,7 @@ addicional.
 1. Obre directament l'app **Connect IQ Store** — o, igual de vàlid, obre l'app
    **Garmin Connect** i ves al teu rellotge → **Connect IQ Store** (o
    **My Apps**).
-2. Busca "CHO/FAT Metabolic" i entra-hi.
+2. Busca "CHO/FAT Metabolic Pro" i entra-hi.
 3. Toca **Settings/Configure** i introdueix els valors que coneguis.
 4. Deixa a **0** qualsevol paràmetre que vulguis que es continuï estimant
    automàticament.

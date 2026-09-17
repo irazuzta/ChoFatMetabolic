@@ -1,6 +1,6 @@
 <resources>
     <strings>
-        <string id="AppName">CHO/FAT Metabolic</string>
+        <string id="AppName">CHO/FAT Metabolic Pro</string>
 
         <string id="TitlePes">Weight (kg) — 0 = use watch value</string>
         <string id="TitleFcRepos">Resting HR (bpm) — 0 = use watch value</string>

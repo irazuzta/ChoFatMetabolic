@@ -15,7 +15,7 @@ may adjust it over time.)
 
 **Fuel smarter, not by guesswork.**
 
-CHO/FAT Metabolic is a Data Field that estimates, second by second, how many grams of
+CHO/FAT Metabolic Pro is a Data Field that estimates, second by second, how many grams of
 carbohydrate and fat your body is burning during exercise — using only your heart
 rate. No extra sensors, no manual logging. Works on watches and Edge bike computers.
 
@@ -99,7 +99,7 @@ way it does for running — see the description above and the user guide.
 ## Notes for the person submitting (not for the Store page)
 
 - App name on the Store will follow whatever is set as `@Strings.AppName` in the
-  manifest (currently "CHO/FAT Metabolic").
+  manifest (currently "CHO/FAT Metabolic Pro").
 - Screenshots: take clean captures from the simulator (or a real device) showing the
   3-row layout with non-zero, readable values in each of the three fueling colors
   (green/orange/red) if possible, to showcase the color-coding feature.

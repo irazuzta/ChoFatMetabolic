@@ -1,4 +1,4 @@
-# How the CHO/FAT Metabolic app works
+# How the CHO/FAT Metabolic Pro app works
 
 This document explains how the data field is implemented, referencing the
 theoretical basis described in

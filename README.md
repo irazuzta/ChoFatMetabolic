@@ -1,4 +1,4 @@
-# CHO/FAT Metabolic
+# CHO/FAT Metabolic Pro
 
 A Garmin Connect IQ **Data Field** that estimates, in real time, how many grams of
 carbohydrate (CHO) and fat (FAT) the body is oxidizing during exercise — from heart

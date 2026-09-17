@@ -1,7 +1,7 @@
 [project]
 site_url = "https://irazuzta.github.io/ChoFatMetabolic/"
-site_name = "CHO/FAT Metabolic"
-site_description = "Technical documentation for the CHO/FAT Metabolic data field for Garmin Connect IQ"
+site_name = "CHO/FAT Metabolic Pro"
+site_description = "Technical documentation for the CHO/FAT Metabolic Pro data field for Garmin Connect IQ"
 
 repo_url = "https://github.com/irazuzta/ChoFatMetabolic"
 repo_name = "irazuzta/ChoFatMetabolic"

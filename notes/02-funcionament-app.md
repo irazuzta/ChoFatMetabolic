@@ -1,4 +1,4 @@
-# Funcionament de l'app CHO/FAT Metabòlic
+# Funcionament de l'app CHO/FAT Metabòlic Pro
 
 Aquest document explica com està implementat el data field, fent referència a la base
 teòrica descrita a [`01-base-teorica.md`](01-base-teorica.md) i al codi font a
