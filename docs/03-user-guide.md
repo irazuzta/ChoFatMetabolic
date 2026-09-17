@@ -61,6 +61,17 @@ cycling VO2max estimate in that case, no extra setup needed.
 4. Leave any parameter at **0** if you want it to keep being estimated
    automatically.
 
+**Why LT2 matters most — especially for cyclists**: of the 6 values, `LT2
+Threshold` has by far the biggest impact on accuracy — `LT1` and the point where
+carb burning starts ramping up are both calculated as a percentage of it, not
+set independently. If you only enter one value manually, make it this one. This
+matters even more if you ride with an Edge: Garmin auto-detects lactate
+threshold for running, but not for cycling — the automatic cycling equivalent
+is FTP, a power number, not a heart rate. So if you're a cyclist, it's worth
+setting `LT2 Threshold` by hand: use the heart rate from your FTP test (the
+steady effort, not the wattage itself), or your cycling Lactate Threshold Heart
+Rate from Garmin Connect's Physiological Metrics if you've set one.
+
 ## 5. What the colors mean
 
 ### CHO avg color (fueling guidance)

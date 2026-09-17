@@ -64,6 +64,18 @@ addicional.
 4. Deixa a **0** qualsevol paràmetre que vulguis que es continuï estimant
    automàticament.
 
+**Per què LT2 és el més important — sobretot per a ciclistes**: dels 6 valors,
+`LT2 Threshold` és el que té més impacte en la precisió — `LT1` i el punt on
+comença a pujar el consum de carbohidrats es calculen tots dos com a
+percentatge d'aquest, no de forma independent. Si només en pots afinar un, que
+sigui aquest. Això és encara més rellevant si fas servir un Edge: Garmin
+detecta automàticament el llindar de lactat per córrer, però no per a
+ciclisme — l'equivalent automàtic de ciclisme és l'FTP, un valor de potència,
+no de freqüència cardíaca. Per tant, si ets ciclista, val la pena introduir
+`LT2 Threshold` a mà: fes servir la FC del teu test d'FTP (l'esforç sostingut,
+no els watts en si), o la teva FC de llindar de lactat de ciclisme de les
+Mètriques Fisiològiques de Garmin Connect si ja en tens una configurada.
+
 ## 5. Què signifiquen els colors
 
 ### Color del CHO avg (consell de fueling)
