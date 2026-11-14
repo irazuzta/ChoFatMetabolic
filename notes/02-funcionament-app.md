@@ -51,10 +51,17 @@ HRR/RER més endavant).
 
 El `VO2max` automàtic també és sensible a l'esport: Garmin guarda per separat el
 VO2max de córrer (`profile.vo2maxRunning`) i el de ciclisme (`profile.vo2maxCycling`)
-— es tria l'un o l'altre segons si l'esport actual és `Activity.SPORT_CYCLING` (bug
+— es tria l'un o l'altre segons si l'esport actual és `UserProfile.HR_ZONE_SPORT_BIKING` (bug
 real detectat durant les proves amb Edge: llegir sempre `vo2maxRunning` feia que un
 Edge caigués sempre al valor per defecte, ja que una bicicleta computadora mai genera
-un VO2max de córrer).
+un VO2max de córrer). Si falta el valor de l'esport (habitual en ciclistes sense
+potenciòmetre), es fa servir l'altre abans de caure al valor per defecte.
+
+Quan acaba una activitat (`onTimerReset()`), l'estat acumulat (grams, EMA, temps
+actiu) es posa a zero i es torna a llegir el perfil, de manera que la següent
+activitat no hereta res de l'anterior. La mitjana de CHO de la sessió es calcula
+sobre el temps realment acumulat, per mantenir-la coherent amb els grams encara
+que hi hagi hagut un tall del sensor o un reinici a mitja activitat.
 
 El punt de "sortida del repòs" $I_{onset}$ (document teòric §6) es calcula sempre com
 a fracció de `lt2`, amb la constant `PCT_ACTIVACIO_CHO = 0.70` — no té equivalent de

@@ -84,7 +84,18 @@ CHO rate, plus total CHO, total FAT and average CHO in the activity summary.
 underlying science and references — is available at
 https://irazuzta.github.io/ChoFatMetabolic/
 
-## What's New (version 0.4.0 — this version)
+## What's New (version 0.4.1 — this version)
+
+```
+Reliability fixes. Starting a new activity now always begins from zero (previously
+a second activity on devices that keep the field loaded, such as Edge, could carry
+over the previous totals). Cyclists without a power meter now use their running
+VO2max estimate instead of a generic default. The average CHO rate is now more
+accurate after sensor dropouts, and the field keeps working even on devices that
+cannot record custom data. No changes to the screen layout.
+```
+
+## What's New (version 0.4.0)
 
 ```
 Your results are now saved with the activity. After syncing, Garmin Connect shows

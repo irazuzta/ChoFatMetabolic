@@ -55,9 +55,17 @@ on).
 The automatic `VO2max` is also sport-aware: Garmin stores running VO2max
 (`profile.vo2maxRunning`) and cycling VO2max (`profile.vo2maxCycling`)
 separately — the app picks one or the other depending on whether the current
-sport is `Activity.SPORT_CYCLING` (a real bug found while testing Edge support:
+sport is `UserProfile.HR_ZONE_SPORT_BIKING` (a real bug found while testing Edge support:
 always reading `vo2maxRunning` meant an Edge would always fall back to the
-default value, since a bike computer never produces a running VO2max).
+default value, since a bike computer never produces a running VO2max). If the
+sport-specific value is missing (common for cyclists without a power meter), the
+other one is used before falling back to the default.
+
+When an activity ends (`onTimerReset()`), the accumulated state (grams, EMA,
+active time) is cleared and the profile is read again, so the next activity
+does not inherit anything from the previous one. The session average CHO is
+computed over the time actually accumulated, which stays consistent with the
+grams even after a sensor dropout or a mid-activity restart.
 
 The "onset of exercise" point $I_{onset}$ (theoretical document §6) is always
 calculated as a fraction of `lt2`, with the constant `PCT_ACTIVACIO_CHO = 0.70` —

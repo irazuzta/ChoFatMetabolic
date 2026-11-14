@@ -45,6 +45,7 @@ class CHOFATView extends WatchUi.DataField {
     hidden var totalChoGrams as Lang.Float = 0.0;
     hidden var totalFatGrams as Lang.Float = 0.0;
     hidden var lastTimerTimeMs as Lang.Number = 0;
+    hidden var tempsActiuMs as Lang.Number = 0; // temps realment acumulat (mostres vàlides)
     hidden var hasStarted as Lang.Boolean = false;
 
     // --- Valors instantanis a mostrar ---
@@ -151,6 +152,14 @@ class CHOFATView extends WatchUi.DataField {
         crearCampsFit();
     }
 
+    // Escriu un valor en un camp FIT, tolerant que el camp no s'hagi pogut
+    // crear (el càlcul i la pantalla no han de dependre del FIT).
+    hidden function desaFit(camp as FitContributor.Field?, valor as Lang.Float) as Void {
+        if (camp != null) {
+            camp.setData(valor);
+        }
+    }
+
     // ------------------------------------------------------------------
     // Crea els 6 camps FIT: 3 de RECORD (valor cada segon, per a la gràfica)
     // i 3 de SESSION (un sol valor per a tota l'activitat, per al resum).
@@ -160,6 +169,10 @@ class CHOFATView extends WatchUi.DataField {
         var ses = FitContributor.MESG_TYPE_SESSION;
         var flt = FitContributor.DATA_TYPE_FLOAT;
 
+        // Si el dispositiu no pot crear els camps (p.ex. límit de camps de
+        // desenvolupador exhaurit), el Data Field segueix funcionant sense FIT.
+        try {
+
         fitChoAcum  = createField("cho_acum_g",   FIT_ID_CHO_ACUM,  flt, {:mesgType => rec, :units => "g"});
         fitFatAcum  = createField("fat_acum_g",   FIT_ID_FAT_ACUM,  flt, {:mesgType => rec, :units => "g"});
         fitChoRate  = createField("cho_rate_gh",  FIT_ID_CHO_RATE,  flt, {:mesgType => rec, :units => "g/h"});
@@ -167,12 +180,20 @@ class CHOFATView extends WatchUi.DataField {
         fitFatTotal = createField("fat_total_g",  FIT_ID_FAT_TOTAL, flt, {:mesgType => ses, :units => "g"});
         fitChoAvg   = createField("cho_avg_gh",   FIT_ID_CHO_AVG,   flt, {:mesgType => ses, :units => "g/h"});
 
-        fitChoAcum.setData(0.0);
-        fitFatAcum.setData(0.0);
-        fitChoRate.setData(0.0);
-        fitChoTotal.setData(0.0);
-        fitFatTotal.setData(0.0);
-        fitChoAvg.setData(0.0);
+        desaFit(fitChoAcum, 0.0);
+        desaFit(fitFatAcum, 0.0);
+        desaFit(fitChoRate, 0.0);
+        desaFit(fitChoTotal, 0.0);
+        desaFit(fitFatTotal, 0.0);
+        desaFit(fitChoAvg, 0.0);
+        } catch (ex) {
+            fitChoAcum = null;
+            fitFatAcum = null;
+            fitChoRate = null;
+            fitChoTotal = null;
+            fitFatTotal = null;
+            fitChoAvg = null;
+        }
     }
 
     // ------------------------------------------------------------------
@@ -180,12 +201,22 @@ class CHOFATView extends WatchUi.DataField {
     // Connect amb els valors manuals opcionals de l'usuari (propietats).
     // Un valor manual > 0 sempre té prioritat sobre l'estimació automàtica.
     // ------------------------------------------------------------------
+    // Llegeix una propietat numèrica; si no és un número (p.ex. text
+    // enviat per l'app del mòbil) retorna 0.0, que vol dir "no fixat".
+    hidden function propNum(clau as Lang.String) as Lang.Float {
+        var v = Application.Properties.getValue(clau);
+        if (v instanceof Lang.Number || v instanceof Lang.Float) {
+            return v.toFloat();
+        }
+        return 0.0;
+    }
+
     function carregarPerfil() as Void {
         var profile = UserProfile.getProfile();
 
         // 1) Pes
-        var pesManual = Application.Properties.getValue("pesManualKg") as Lang.Float?;
-        if (pesManual != null && pesManual > 0.0) {
+        var pesManual = propNum("pesManualKg");
+        if (pesManual > 0.0) {
             pesKg = pesManual;
         } else if (profile != null) {
             var pesPerfil = profile.weight;
@@ -195,12 +226,12 @@ class CHOFATView extends WatchUi.DataField {
         }
 
         // 2) FC de repòs
-        var fcReposManual = Application.Properties.getValue("fcReposManual") as Lang.Number?;
-        if (fcReposManual != null && fcReposManual > 0) {
+        var fcReposManual = propNum("fcReposManual").toNumber();
+        if (fcReposManual > 0) {
             fcRepos = fcReposManual;
         } else if (profile != null) {
             var fcReposPerfil = profile.restingHeartRate;
-            if (fcReposPerfil != null) {
+            if (fcReposPerfil != null && fcReposPerfil > 0) {
                 fcRepos = fcReposPerfil;
             }
         }
@@ -210,11 +241,17 @@ class CHOFATView extends WatchUi.DataField {
         //    que correspongui a l'esport actual (rellevant sobretot en
         //    dispositius Edge, on el de córrer sempre seria null).
         var sport = UserProfile.getCurrentSport();
-        var vo2Manual = Application.Properties.getValue("vo2maxManual") as Lang.Float?;
-        if (vo2Manual != null && vo2Manual > 0.0) {
+        var vo2Manual = propNum("vo2maxManual");
+        if (vo2Manual > 0.0) {
             vo2max = vo2Manual;
         } else if (profile != null) {
-            var vo2Perfil = (sport == Activity.SPORT_CYCLING) ? profile.vo2maxCycling : profile.vo2maxRunning;
+            var enBici = (sport == UserProfile.HR_ZONE_SPORT_BIKING);
+            var vo2Perfil = enBici ? profile.vo2maxCycling : profile.vo2maxRunning;
+            if (vo2Perfil == null) {
+                // Sense potenciòmetre molts usuaris no tenen VO2max de ciclisme:
+                // millor fer servir l'altre valor que el per defecte (50).
+                vo2Perfil = enBici ? profile.vo2maxRunning : profile.vo2maxCycling;
+            }
             if (vo2Perfil != null) {
                 vo2max = vo2Perfil.toFloat();
             }
@@ -229,8 +266,8 @@ class CHOFATView extends WatchUi.DataField {
             zonesFC = zones;
         }
 
-        var fcMaxManual = Application.Properties.getValue("fcMaxManual") as Lang.Number?;
-        if (fcMaxManual != null && fcMaxManual > 0) {
+        var fcMaxManual = propNum("fcMaxManual").toNumber();
+        if (fcMaxManual > 0) {
             fcMax = fcMaxManual;
         } else if (zones != null && zones.size() >= 6) {
             var z5 = zones[5];
@@ -239,8 +276,8 @@ class CHOFATView extends WatchUi.DataField {
             }
         }
 
-        var lt2Manual = Application.Properties.getValue("lt2Manual") as Lang.Number?;
-        if (lt2Manual != null && lt2Manual > 0) {
+        var lt2Manual = propNum("lt2Manual").toNumber();
+        if (lt2Manual > 0) {
             lt2 = lt2Manual;
         } else if (zones != null && zones.size() >= 6) {
             var z4 = zones[4];
@@ -265,12 +302,39 @@ class CHOFATView extends WatchUi.DataField {
         // 6) LT1 manual (opcional): només es fa servir si queda coherent
         //    entre FC repòs i LT2; si no, es torna a l'estimació automàtica
         //    PCT_LT1*lt2 (veure compute()).
-        var lt1Manual = Application.Properties.getValue("lt1Manual") as Lang.Number?;
-        if (lt1Manual != null && lt1Manual > fcRepos && lt1Manual < lt2) {
+        //    També ha de quedar per sobre del punt d'activació de CHO (70% LT2),
+        //    si no el RER faria un salt en interpolar.
+        var lt1Manual = propNum("lt1Manual").toNumber();
+        if (lt1Manual > fcRepos && lt1Manual > PCT_ACTIVACIO_CHO * lt2 && lt1Manual < lt2) {
             lt1Fixat = lt1Manual;
         } else {
             lt1Fixat = 0;
         }
+    }
+
+    // ------------------------------------------------------------------
+    // L'activitat ha acabat (desada o descartada): tornem a zero perquè
+    // l'activitat següent no hereti els grams, la mitjana ni l'EMA, i
+    // rellegim el perfil (esport o ajustos poden haver canviat).
+    // ------------------------------------------------------------------
+    function onTimerReset() as Void {
+        totalChoGrams = 0.0;
+        totalFatGrams = 0.0;
+        choRateGH = 0.0;
+        choAvgGH = 0.0;
+        choAvgEmaGH = 0.0;
+        emaInicialitzada = false;
+        hasStarted = false;
+        lastTimerTimeMs = 0;
+        tempsActiuMs = 0;
+        minutsTranscorreguts = 0.0;
+        carregarPerfil();
+        desaFit(fitChoAcum, 0.0);
+        desaFit(fitFatAcum, 0.0);
+        desaFit(fitChoRate, 0.0);
+        desaFit(fitChoTotal, 0.0);
+        desaFit(fitFatTotal, 0.0);
+        desaFit(fitChoAvg, 0.0);
     }
 
     // ------------------------------------------------------------------
@@ -307,6 +371,7 @@ class CHOFATView extends WatchUi.DataField {
             return;
         }
 
+        tempsActiuMs += dtMs;
         var dtMin = dtMs / 60000.0;
         var fcActual = (info.currentHeartRate as Lang.Number).toFloat();
 
@@ -372,7 +437,10 @@ class CHOFATView extends WatchUi.DataField {
         // --- Valor per mostrar (taxa instantània de CHO) ---
         choRateGH = choGMin * 60.0;
 
-        var horesTotals = timerTimeMs / 3600000.0;
+        // Mitjana sobre el temps realment acumulat (no sobre tot el timer):
+        // així és coherent amb els grams encara que el camp s'hagi reiniciat
+        // a mitja activitat o hi hagi hagut talls del sensor.
+        var horesTotals = tempsActiuMs / 3600000.0;
         choAvgGH = horesTotals > 0.0 ? totalChoGrams / horesTotals : 0.0;
 
         // --- Mitjana mòbil exponencial (EMA) ---
@@ -392,12 +460,12 @@ class CHOFATView extends WatchUi.DataField {
 
         // --- Desa els valors al fitxer .FIT (RECORD + SESSION). Els de
         //     SESSION s'actualitzen cada segon: s'escriu l'últim valor. ---
-        fitChoAcum.setData(totalChoGrams);
-        fitFatAcum.setData(totalFatGrams);
-        fitChoRate.setData(choAvgEmaGH);
-        fitChoTotal.setData(totalChoGrams);
-        fitFatTotal.setData(totalFatGrams);
-        fitChoAvg.setData(choAvgGH);
+        desaFit(fitChoAcum, totalChoGrams);
+        desaFit(fitFatAcum, totalFatGrams);
+        desaFit(fitChoRate, choAvgEmaGH);
+        desaFit(fitChoTotal, totalChoGrams);
+        desaFit(fitFatTotal, totalFatGrams);
+        desaFit(fitChoAvg, choAvgGH);
     }
 
     // ------------------------------------------------------------------
