@@ -91,3 +91,17 @@ for the duration of your effort.
 Same scheme as Garmin Connect: grey (Z1), blue (Z2), green (Z3), orange (Z4),
 red (Z5). It's independent of the CHO color — one indicates effort intensity,
 the other carbohydrate consumption.
+
+## 6. Your data after the activity
+
+The app saves its results inside the activity, so you can review them once the
+workout is over. After your watch syncs, open the activity in Garmin Connect:
+
+- **Charts**: accumulated CHO (g), accumulated FAT (g) and the CHO rate (g/h,
+  smoothed) over the whole activity.
+- **Summary**: total CHO (g), total FAT (g) and average CHO (g/h) for the activity.
+
+Nothing needs to be configured — it is recorded automatically whenever the field
+is on screen during an activity. Services that ignore custom data fields (such as
+Strava) may not display it, but the values are stored in the activity's `.FIT`
+file.

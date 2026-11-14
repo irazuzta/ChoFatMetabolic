@@ -23,6 +23,7 @@ using Toybox.Application;
 using Toybox.Lang;
 using Toybox.System;
 using Toybox.Math;
+using Toybox.FitContributor;
 
 // ============================================================================
 // CHOFATView
@@ -126,9 +127,52 @@ class CHOFATView extends WatchUi.DataField {
         Graphics.FONT_MEDIUM, Graphics.FONT_SMALL, Graphics.FONT_TINY, Graphics.FONT_XTINY
     ];
 
+    // --- Camps propis escrits al fitxer .FIT de l'activitat (FitContributor).
+    //     Es veuen a Garmin Connect (gràfica / resum) un cop sincronitzada
+    //     l'activitat. Els ids han de coincidir amb fitcontributions.xml i
+    //     NO s'han de canviar un cop publicats. ---
+    const FIT_ID_CHO_ACUM = 0;
+    const FIT_ID_FAT_ACUM = 1;
+    const FIT_ID_CHO_RATE = 2;
+    const FIT_ID_CHO_TOTAL = 3;
+    const FIT_ID_FAT_TOTAL = 4;
+    const FIT_ID_CHO_AVG = 5;
+
+    hidden var fitChoAcum as FitContributor.Field?;
+    hidden var fitFatAcum as FitContributor.Field?;
+    hidden var fitChoRate as FitContributor.Field?;
+    hidden var fitChoTotal as FitContributor.Field?;
+    hidden var fitFatTotal as FitContributor.Field?;
+    hidden var fitChoAvg as FitContributor.Field?;
+
     function initialize() {
         DataField.initialize();
         carregarPerfil();
+        crearCampsFit();
+    }
+
+    // ------------------------------------------------------------------
+    // Crea els 6 camps FIT: 3 de RECORD (valor cada segon, per a la gràfica)
+    // i 3 de SESSION (un sol valor per a tota l'activitat, per al resum).
+    // ------------------------------------------------------------------
+    function crearCampsFit() as Void {
+        var rec = FitContributor.MESG_TYPE_RECORD;
+        var ses = FitContributor.MESG_TYPE_SESSION;
+        var flt = FitContributor.DATA_TYPE_FLOAT;
+
+        fitChoAcum  = createField("cho_acum_g",   FIT_ID_CHO_ACUM,  flt, {:mesgType => rec, :units => "g"});
+        fitFatAcum  = createField("fat_acum_g",   FIT_ID_FAT_ACUM,  flt, {:mesgType => rec, :units => "g"});
+        fitChoRate  = createField("cho_rate_gh",  FIT_ID_CHO_RATE,  flt, {:mesgType => rec, :units => "g/h"});
+        fitChoTotal = createField("cho_total_g",  FIT_ID_CHO_TOTAL, flt, {:mesgType => ses, :units => "g"});
+        fitFatTotal = createField("fat_total_g",  FIT_ID_FAT_TOTAL, flt, {:mesgType => ses, :units => "g"});
+        fitChoAvg   = createField("cho_avg_gh",   FIT_ID_CHO_AVG,   flt, {:mesgType => ses, :units => "g/h"});
+
+        fitChoAcum.setData(0.0);
+        fitFatAcum.setData(0.0);
+        fitChoRate.setData(0.0);
+        fitChoTotal.setData(0.0);
+        fitFatTotal.setData(0.0);
+        fitChoAvg.setData(0.0);
     }
 
     // ------------------------------------------------------------------
@@ -345,6 +389,15 @@ class CHOFATView extends WatchUi.DataField {
             if (alphaTick > 1.0) { alphaTick = 1.0; }
             choAvgEmaGH = choAvgEmaGH + alphaTick * (choRateGH - choAvgEmaGH);
         }
+
+        // --- Desa els valors al fitxer .FIT (RECORD + SESSION). Els de
+        //     SESSION s'actualitzen cada segon: s'escriu l'últim valor. ---
+        fitChoAcum.setData(totalChoGrams);
+        fitFatAcum.setData(totalFatGrams);
+        fitChoRate.setData(choAvgEmaGH);
+        fitChoTotal.setData(totalChoGrams);
+        fitFatTotal.setData(totalFatGrams);
+        fitChoAvg.setData(choAvgGH);
     }
 
     // ------------------------------------------------------------------

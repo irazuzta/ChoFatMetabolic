@@ -76,11 +76,25 @@ Tip: fat burning naturally takes a few minutes to ramp up at the start of exerci
 readings in the first 10-20 minutes will lean more toward carbs than later in the
 session — a short warm-up beforehand can reduce this delay.
 
+**Review it after your workout.** The results are saved in the activity: once your
+watch syncs, Garmin Connect shows charts of accumulated CHO, accumulated FAT and
+CHO rate, plus total CHO, total FAT and average CHO in the activity summary.
+
 **Want the details?** Full documentation — a plain-language user guide plus the
 underlying science and references — is available at
 https://irazuzta.github.io/ChoFatMetabolic/
 
-## What's New (this version)
+## What's New (version 0.4.0 — this version)
+
+```
+Your results are now saved with the activity. After syncing, Garmin Connect shows
+charts of accumulated CHO, accumulated FAT and CHO rate (g/h), plus total CHO,
+total FAT and average CHO (g/h) in the activity summary — so you can review your
+fueling after the workout, not just during it. No changes to the calculation or
+to the on-screen layout.
+```
+
+## What's New (previous version)
 
 ```
 Added compatibility with Garmin Edge bike computers — a small adaptation of the

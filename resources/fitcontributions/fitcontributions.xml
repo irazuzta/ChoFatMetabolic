@@ -1,0 +1,22 @@
+<resources>
+    <fitContributions>
+        <!-- RECORD: gràfica durant l'activitat -->
+        <fitField id="0" displayInChart="true" sortOrder="0" precision="1"
+            chartTitle="@Strings.FitChoAcumLabel" dataLabel="@Strings.FitChoAcumLabel"
+            unitLabel="@Strings.UnitGrams" fillColor="#FF8C00" />
+        <fitField id="1" displayInChart="true" sortOrder="1" precision="1"
+            chartTitle="@Strings.FitFatAcumLabel" dataLabel="@Strings.FitFatAcumLabel"
+            unitLabel="@Strings.UnitGrams" fillColor="#1E90FF" />
+        <fitField id="2" displayInChart="true" sortOrder="2" precision="0"
+            chartTitle="@Strings.FitChoRateLabel" dataLabel="@Strings.FitChoRateLabel"
+            unitLabel="@Strings.UnitGramsPerHour" fillColor="#E53935" />
+
+        <!-- SESSION: resum de l'activitat -->
+        <fitField id="3" displayInActivitySummary="true" sortOrder="3" precision="0"
+            dataLabel="@Strings.FitChoTotalLabel" unitLabel="@Strings.UnitGrams" />
+        <fitField id="4" displayInActivitySummary="true" sortOrder="4" precision="0"
+            dataLabel="@Strings.FitFatTotalLabel" unitLabel="@Strings.UnitGrams" />
+        <fitField id="5" displayInActivitySummary="true" sortOrder="5" precision="0"
+            dataLabel="@Strings.FitChoAvgLabel" unitLabel="@Strings.UnitGramsPerHour" />
+    </fitContributions>
+</resources>

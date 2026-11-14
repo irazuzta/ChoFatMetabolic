@@ -91,6 +91,25 @@ Per cada mostra vàlida (amb FC disponible):
    vàlida inicialitza l'EMA directament amb el valor instantani (no comença a 0 i puja
    lentament).
 
+### Desar els resultats a l'activitat (`FitContributor`)
+
+Al final de cada cicle de `compute()` l'app escriu sis camps propis al fitxer
+`.FIT` de l'activitat amb `Toybox.FitContributor` (permís `FitContributor`, camps
+creats a `crearCampsFit()`). Garmin Connect els mostra un cop sincronitzada
+l'activitat; el disseny es defineix a `resources/fitcontributions/fitcontributions.xml`.
+
+| Id | Camp | Missatge | Unitat | Es veu a Garmin Connect com |
+|---|---|---|---|---|
+| 0 | `cho_acum_g` | RECORD | g | gràfica: CHO acumulat |
+| 1 | `fat_acum_g` | RECORD | g | gràfica: FAT acumulat |
+| 2 | `cho_rate_gh` | RECORD | g/h | gràfica: taxa de CHO (EMA) |
+| 3 | `cho_total_g` | SESSION | g | resum de l'activitat |
+| 4 | `fat_total_g` | SESSION | g | resum de l'activitat |
+| 5 | `cho_avg_gh` | SESSION | g/h | resum de l'activitat |
+
+Els ids s'han de mantenir estables un cop publicats. Els camps SESSION
+s'actualitzen cada segon, així que el valor escrit al final és l'últim.
+
 ## 4. Interfície visual (`onUpdate()`)
 
 ### 4.1. Graella de 3 files × 2 columnes
@@ -218,8 +237,6 @@ d'un fitxer local.
 - `FCmax` i `LT2` són estimacions basades en zones de FC configurades, no mesures
   directes — la seva precisió depèn de com l'usuari (o Garmin) hagi configurat
   aquestes zones.
-- Les dades no es desen de forma visible a Garmin Connect (no s'ha implementat
-  `FitContributor`); per a anàlisi posterior cal reprocessar el `.FIT` estàndard de
-  l'activitat amb una eina externa (l'app ja disposa d'un script de referència en
-  Python fet servir durant el desenvolupament per validar l'algoritme contra dades
-  reals).
+- Els resultats es desen a l'activitat (camps FIT propis) i Garmin Connect els
+  mostra un cop sincronitzada, però els serveis que ignoren els camps de
+  desenvolupador (p.ex. Strava) no els ensenyaran; els valors sí que són al `.FIT`.

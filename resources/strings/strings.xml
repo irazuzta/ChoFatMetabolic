@@ -8,5 +8,14 @@
         <string id="TitleLt2">LT2 Threshold (bpm) — 0 = estimate from zone 4 ceiling (approx.)</string>
         <string id="TitleLt1">LT1 Threshold (bpm) — 0 = estimate as 85% of LT2</string>
         <string id="TitleVo2max">VO2max (ml/kg/min) — 0 = use watch value</string>
+
+        <string id="FitChoAcumLabel">CHO accumulated</string>
+        <string id="FitFatAcumLabel">FAT accumulated</string>
+        <string id="FitChoRateLabel">CHO rate (EMA)</string>
+        <string id="FitChoTotalLabel">CHO total</string>
+        <string id="FitFatTotalLabel">FAT total</string>
+        <string id="FitChoAvgLabel">CHO average</string>
+        <string id="UnitGrams">g</string>
+        <string id="UnitGramsPerHour">g/h</string>
     </strings>
 </resources>

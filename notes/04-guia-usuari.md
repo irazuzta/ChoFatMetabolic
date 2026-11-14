@@ -94,3 +94,16 @@ et podries estar quedant curt de carbohidrats per a la durada de l'esforç.
 Mateix esquema que Garmin Connect: gris (Z1), blau (Z2), verd (Z3), taronja
 (Z4), vermell (Z5). És independent del color del CHO — un indica intensitat de
 l'esforç, l'altre consum de carbohidrats.
+
+## 6. Les dades després de l'activitat
+
+L'app desa els resultats dins de l'activitat, de manera que pots revisar-los quan
+acabes. Un cop el rellotge sincronitza, obre l'activitat a Garmin Connect:
+
+- **Gràfiques**: CHO acumulat (g), FAT acumulat (g) i taxa de CHO (g/h, suavitzada)
+  al llarg de tota l'activitat.
+- **Resum**: CHO total (g), FAT total (g) i CHO mitjà (g/h) de l'activitat.
+
+No cal configurar res: es registra automàticament quan el camp és en pantalla
+durant una activitat. Els serveis que ignoren els camps de dades propis (com
+Strava) potser no els mostren, però els valors queden al fitxer `.FIT`.

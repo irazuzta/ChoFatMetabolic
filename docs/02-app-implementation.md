@@ -98,6 +98,26 @@ For each valid sample (with HR available):
    (τ=15 min). The first valid sample initializes the EMA directly with the
    instantaneous value (it does not start at 0 and climb slowly).
 
+### Saving results to the activity file (`FitContributor`)
+
+At the end of every `compute()` cycle the app writes six custom fields into the
+activity's `.FIT` file through `Toybox.FitContributor` (permission
+`FitContributor`, fields created in `crearCampsFit()`). They are shown by
+Garmin Connect once the activity is synced; the layout is defined in
+`resources/fitcontributions/fitcontributions.xml`.
+
+| Id | Field | Message | Unit | Shown in Garmin Connect as |
+|---|---|---|---|---|
+| 0 | `cho_acum_g` | RECORD | g | chart: accumulated CHO |
+| 1 | `fat_acum_g` | RECORD | g | chart: accumulated FAT |
+| 2 | `cho_rate_gh` | RECORD | g/h | chart: CHO rate (EMA) |
+| 3 | `cho_total_g` | SESSION | g | activity summary |
+| 4 | `fat_total_g` | SESSION | g | activity summary |
+| 5 | `cho_avg_gh` | SESSION | g/h | activity summary |
+
+The ids must stay stable once published. SESSION fields are refreshed every
+second, so the value written at the end is the last one.
+
 ## 4. Visual interface (`onUpdate()`)
 
 ### 4.1. 3-row × 2-column grid
@@ -226,7 +246,6 @@ sideloading from a local file.
 - `HRmax` and `LT2` are estimates based on configured HR zones, not direct
   measurements — their accuracy depends on how the user (or Garmin) has
   configured those zones.
-- Data is not saved visibly to Garmin Connect (no `FitContributor` has been
-  implemented); for later analysis, the activity's standard `.FIT` file must be
-  reprocessed with an external tool (the app already has a reference Python
-  script, used during development to validate the algorithm against real data).
+- Results are saved in the activity (custom FIT fields) and shown by Garmin
+  Connect after syncing, but services that ignore developer fields (e.g. Strava)
+  will not display them; the values are still in the `.FIT` file.
