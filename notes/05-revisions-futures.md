@@ -25,11 +25,16 @@ Per fer-ho bé:
    (p. ex. CHO total de 150 g).
 3. Si cal canviar-ho, que sigui un ajust de la geometria existent, no un disseny nou.
 
-## Pendent del llançament 0.4.0
+## Llançament 0.4.0
 
-- Comprovar amb una activitat real que Garmin Connect mostra les tres gràfiques i el
-  resum (CHO total, FAT total, CHO mitjà). Fins ara només s'ha verificat el `.FIT` al
-  simulador.
+- **Verificat (14/11/2026):** amb una activitat real de trail run a l'Epix 2 Pro (versió de
+  l'Store), Garmin Connect mostra les tres gràfiques i les tres dades de resum (CHO total,
+  FAT total, CHO mitjà).
+- Una caminada feta abans amb una versió anterior del rellotge no tenia cap camp de
+  desenvolupador al `.fit` (ni al del rellotge ni a l'original de Connect). Probablement
+  corria una versió d'abans de la 0.4.0; pendent de repetir-la amb la versió actual per
+  descartar que caminar no els escrigui. Una sessió de força tampoc va mostrar res a
+  Connect; no s'ha confirmat que Garmin deixi camps de Connect IQ en aquest tipus d'activitat.
 - Memòria: Edge 130 Plus no s'ha mesurat al simulador (FR55 i Instinct 2S, sí: pic ~16 kB
   sobre 28,5 kB).
 
