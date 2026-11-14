@@ -25,8 +25,8 @@ updates at two different moments:
 
 ## 2. Resolving the physiological profile (`carregarPerfil()`)
 
-When the data field is created, the 5 physiological parameters that feed the
-model (weight, resting HR, max HR, LT2, VO2max) are resolved. For each one, the
+When the data field is created, the 6 physiological parameters that feed the
+model (weight, resting HR, max HR, LT2, LT1, VO2max) are resolved. For each one, the
 priority is:
 
 1. **Manual value** (`Properties`, in `resources/settings/properties.xml`) if the
@@ -39,14 +39,17 @@ Important note (documented because it's hard to find): manual values can only be
 edited from the Connect IQ Store's settings screen, which **does not work for
 sideloaded apps** (see §7) — the settings UI is downloaded dynamically based on
 the app's ID as registered in the Store, and a sideload has no access to it. So in
-practice, as long as the app is not published, it will always run in automatic
-mode.
+practice, a sideloaded build always runs in automatic mode.
 
-For `HRmax` and `LT2`, since Garmin does not expose them directly (see §5 of the
-theoretical document), they are inferred from the watch's `getHeartRateZones()`:
+For `HRmax` and `LT2`, since Garmin does not expose them directly, they are
+inferred from the watch's `getHeartRateZones()`:
 zone 5 ceiling → HRmax, zone 4 ceiling → LT2. This call is already aware of the
 current sport (`UserProfile.getCurrentSport()`), so on an Edge bike computer it
-correctly reads the **cycling** zones, not the running ones. At the end of
+correctly reads the **cycling** zones, not the running ones. Note that with
+Garmin's default %HRmax zones the zone 4 ceiling is simply 90% of HRmax: close to
+the population-average LT2 (about 90.6% of HRmax in recreational runners; Nuuttila
+et al., 2025) but not a measurement. Zones built on a measured lactate threshold
+line up much better. At the end of
 `carregarPerfil()` there is a coherence check: if `HRmax` does not end up above
 `HRrest`, or if `LT2` does not end up in between, it is corrected automatically
 (absurd values are never allowed to silently break the HRR/RER calculation later
@@ -75,9 +78,9 @@ the theoretical document).
 $LT_1$, on the other hand, is a real physiological threshold that an athlete may
 know from their own testing, so it follows the same pattern as the rest of the
 profile: if the user enters a manual value (`lt1Manual`, property > 0) and it is
-coherent (between `fcRepos` and `lt2`), it is used directly; if not, it is
-silently discarded and the estimate `PCT_LT1 * lt2` (`PCT_LT1 = 0.85`) is used
-instead.
+coherent (above `fcRepos` and above the CHO-onset point `0.70 * lt2`, and below
+`lt2`), it is used directly; if not, it is silently discarded and the estimate
+`PCT_LT1 * lt2` (`PCT_LT1 = 0.89`) is used instead.
 
 ## 3. Calculation cycle (`compute()`)
 
@@ -95,7 +98,12 @@ For each valid sample (with HR available):
    `zonesFC` thresholds (saved in `carregarPerfil()`), for the small Z1-Z5
    indicator.
 3. **HRR → VO2** and **RER by zones** → grams of CHO/FAT per minute, following
-   exactly the formulas described in the theoretical document (§3-7).
+   exactly the formulas described in the theoretical document (§3-7). The
+   reference constants live at the top of the class: `RER_BASAL = 0.86`,
+   `RER_LT1 = 0.91`, `RER_LT2 = 0.98`, `RER_MAX = 1.00`, `PCT_LT1 = 0.89` and
+   `PCT_ACTIVACIO_CHO = 0.70`; the theoretical document explains where they come
+   from (§5.1, §6) and for whom they are calibrated (§10). HRR is clamped to the
+   0-1 range and negative CHO/FAT rates are floored at 0.
 4. **Accumulation**: `totalChoGrams` and `totalFatGrams` add the grams from this
    tick (the discretization of the CHO_total/FAT_total integral, see theoretical
    document §8.2).
@@ -196,14 +204,18 @@ consumption, which is the same regardless of which data field is shown.
 
 ### 5.1. CHO consumption (fueling)
 
-The `CHO avg (g/h)` value is colored with `colorPerCho(value, sessionMinutes)`
-following the time-staggered bands described in the theoretical document (§9):
+The `CHO avg (g/h)` value is colored with `colorPerCho(value, sessionMinutes)`.
+The thresholds compare the CHO oxidation rate with how much carbohydrate a person
+can realistically absorb while exercising (theoretical document §9: about 60 g/h
+from a single source, up to about 90 g/h with multiple-transportable carbohydrates):
 
 | Elapsed time | Green | Orange | Red |
 |---|---|---|---|
-| < 45 min | (always green) | — | — |
-| 45 min - 2h | < 30 g/h | 30-60 g/h | > 60 g/h |
-| > 2h | < 60 g/h | 60-90 g/h | > 90 g/h |
+| < 45 min | (always green, glycogen stores are full) | — | — |
+| ≥ 45 min | < 60 g/h | 60-90 g/h | ≥ 90 g/h |
+
+Red therefore means "burning more carbohydrate than can be replaced", which is
+normal at moderate-to-hard intensity: the difference comes from glycogen stores.
 
 ### 5.2. HR zone
 
@@ -247,13 +259,18 @@ sideloading from a local file.
 
 ## 8. Known limitations
 
-- The model is an approximation based exclusively on HR; it does not capture the
-  effect of duration on relative substrate expenditure (glycogen being depleted
-  at the same relative intensity as time passes), since it is inherently a
-  point-in-time model.
+- The model is an approximation based exclusively on HR, calibrated for
+  recreational-to-trained athletes on a normal mixed diet in a fed state
+  (theoretical document §10). It does not capture the effect of duration (RER
+  tends to fall as the effort goes on, so CHO is increasingly overestimated in
+  long sessions), nor diet, fasting, sex, heat or cardiac drift. Elite or
+  fat-adapted athletes will see CHO overestimated and untrained people
+  underestimated. Treat the numbers as an indication of order of magnitude and
+  trends, not as a measurement.
 - `HRmax` and `LT2` are estimates based on configured HR zones, not direct
   measurements — their accuracy depends on how the user (or Garmin) has
-  configured those zones.
+  configured those zones. With Garmin's default %HRmax zones, the zone 4 ceiling is
+  just 90% of HRmax.
 - Results are saved in the activity (custom FIT fields) and shown by Garmin
   Connect after syncing, but services that ignore developer fields (e.g. Strava)
   will not display them; the values are still in the `.FIT` file.

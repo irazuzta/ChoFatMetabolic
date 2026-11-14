@@ -6,6 +6,13 @@ de forma no invasiva: la freqüència cardíaca (FC). Es
 presenten la fisiologia i les matemàtiques del model amb les seves referències
 científiques, deduint-lo pas a pas des de l'objectiu fins a la seva forma final.
 
+> **Abast.** Els valors de referència d'aquest model estan triats per a **esportistes de
+> fons aficionats-entrenats** (aproximadament $VO_{2max}$ 45-60 ml·kg⁻¹·min⁻¹) que fan
+> una **dieta mixta normal** i s'exerciten **havent menjat**, amb un esforç estable.
+> Per a altres perfils — esportistes d'elit o adaptats al greix, entrenament en dejú
+> o baix en carbohidrats, persones poc entrenades — l'estimació té un biaix en una
+> direcció coneguda (veure §10).
+
 ## 1. Objectiu
 
 Volem conèixer, en qualsevol instant $t$ d'una activitat, la **taxa d'oxidació** de
@@ -161,45 +168,58 @@ mitjana poblacional, amb variabilitat individual). El resultat depèn directamen
 la qualitat de $FC_{repòs}$, $FC_{màxima}$ i $VO_{2max}$ com a entrades del model —
 en la pràctica, aquests tres valors sovint també són ells mateixos estimacions (no
 mesures directes de laboratori), cosa que introdueix una font addicional
-d'incertesa acumulada sobre el resultat final.
+d'incertesa acumulada sobre el resultat final. La FC també puja a càrrega constant
+amb calor, amb deshidratació o en esforços llargs (deriva cardíaca), cosa que el
+model interpreta com una intensitat més alta (veure §10).
 
 ## 5. Estimació de $RER(t)$: llindars metabòlics
 
 El RER real no és constant: puja de manera no lineal amb la intensitat, sobretot al
 voltant dels **llindars metabòlics** ($LT_1$, llindar aeròbic; $LT_2$, llindar
-anaeròbic/de lactat). Aquest comportament general està documentat a:
+anaeròbic/de lactat). Els conceptes de llindar en si, i fins a quin punt és vàlida cada manera de
+definir-los, es revisen a:
 
 > Faude O, Kindermann W, Meyer T. **Lactate threshold concepts: how valid are they?**
 > *Sports Medicine*. 2009;39(6):469-490.
 
+La manera com puja el RER amb la intensitat s'ha mesurat directament. En 61
+ciclistes entrenats que s'exercitaven després d'un dejú nocturn, el RER mitjà va ser
+$0{,}82$ en repòs i va pujar a $0{,}86$, $0{,}90$ i $0{,}98$ al 41%, 63% i 80% del
+$VO_{2pic}$, amb una desviació estàndard d'uns $0{,}04$ entre individus a cada
+intensitat (Goedecke et al., 2000).
+
 $LT_1$ es defineix, fisiològicament, com el punt on el lactat en sang comença a pujar
-per sobre del nivell de repòs. En aquest punt, un esportista de fons ben entrenat
-encara crema majoritàriament greix (el metabolisme continua sent molt eficient
-aeròbicament), no un 50%/50%. El punt on la contribució energètica és exactament
-50% greix / 50% CHO és un concepte relacionat però **diferent**, conegut a la
-literatura com el **"crossover point"**:
+per sobre del nivell de repòs, normalment cap al 65-73% del $VO_{2max}$ en corredors i
+ciclistes aficionats. El punt on la contribució energètica és exactament 50% greix /
+50% CHO és un concepte relacionat però **diferent**, conegut a la literatura com el
+**"crossover point"**:
 
 > Brooks GA, Mercier J. **Balance of carbohydrate and lipid utilization during
 > exercise: the "crossover" concept.** *Journal of Applied Physiology*.
 > 1994;76(6):2253-2261.
 
-Segons la taula clàssica de quocient respiratori no-proteic (Lusk 1924; actualitzada
-per Péronnet & Massicotte 1991, ja citada a §3), el 50%/50% es correspon amb
-$RER\approx 0{,}85$, mentre que a $LT_1$ (una mica abans, a intensitat més baixa) el
-RER sol ser una mica inferior — consistent amb que el greix encara predomini
-lleugerament en aquest punt. $LT_2$, en canvi, marca el **màxim estat estacionari de
-lactat**: la intensitat límit on el cos encara pot eliminar el lactat al mateix ritme
-que el produeix; en aquest punt el RER sol estar entre $0{,}95$ i $1{,}00$ (encara
-queda una petita oxidació residual de greix, típicament un $6$-$10\%$ de l'energia).
-Per sobre de $LT_2$, el RER pot arribar a superar $1{,}00$ (fins a $1{,}05$-$1{,}10$ en
-esforços gairebé màxims), per l'efecte tampó del bicarbonat sanguini sobre l'àcid
-làctic acumulat, que allibera CO2 addicional pels pulmons.
+Segons la taula clàssica de quocient respiratori no-proteic (Lusk 1924, actualitzada
+per Péronnet & Massicotte 1991), el 50%/50% es correspon amb $RER\approx 0{,}85$. Per
+a un esportista aficionat-entrenat amb dieta normal, aquest creuament es dona a una
+intensitat força baixa: l'oxidació màxima de greix ("Fatmax") apareix cap al 48% del
+$VO_{2max}$ de mitjana (Venables et al., 2005; 300 homes i dones sans), i a $LT_1$ el
+RER ja és d'uns $0{,}90$ — els carbohidrats predominen molt abans del primer llindar
+de lactat. $LT_2$, en canvi, marca el **màxim estat estacionari de lactat**: la
+intensitat límit on el cos encara pot eliminar el lactat al mateix ritme que el
+produeix. Els valors de RER publicats en aquest punt van d'uns $0{,}90$ (estat
+estacionari al propi màxim estat estacionari de lactat) a uns $0{,}99$ (al segon
+llindar ventilatori en proves progressives), i l'oxidació de greix esdevé marginal
+(d'un $15\%$ de l'energia aproximadament a $RER=0{,}95$ a pràcticament cap a
+$RER=1{,}00$). Per sobre de $LT_2$, el RER pot superar $1{,}00$ (valors de pic d'uns
+$1{,}2$ en esforços màxims; Edvardsen et al., 2014), però aquest excés és CO2
+alliberat per l'efecte tampó del bicarbonat sobre l'àcid làctic, no oxidació addicional
+de carbohidrats — per això el model limita el RER a $1{,}00$.
 
 ### 5.1. Model d'interpolació
 
 Com que no es pot mesurar lactat ni gasos sense equipament de laboratori, es pot
 **aproximar** aquesta corba amb una interpolació lineal per trams, en funció de
-quatre punts de referència de la FC: repòs, un punt de **sortida del repòs**
+quatre punts de referència de la FC: un punt de **sortida del repòs**
 ($I_{onset}$, §6), $LT_1$, $LT_2$, i $FC_{màxima}$:
 
 $$
@@ -214,20 +234,25 @@ $$
 
 amb els valors de referència triats per a aquest model:
 
-| Punt | RER de referència | Consistència amb la literatura (§5) |
+| Punt | RER de referència | Evidència (§5) |
 |---|---|---|
-| $R_{basal}$ (repòs/molt suau) | $0{,}72$ | Per sota de la mitjana poblacional ($\sim 0{,}80$), però dins del rang observat en atletes de fons entrenats ($0{,}718$-$0{,}927$) |
-| $R_{LT_1}$ | $0{,}82$ | Una mica per sota del rang més citat per a $LT_1$ ($0{,}85$-$0{,}87$); coherent amb un perfil de fons on el greix encara predomina en aquest punt (§5) |
-| $R_{LT_2}$ | $0{,}98$ | Molt proper al consens de la literatura ($\approx 1{,}00$ a $LT_2$) |
-| $R_{max}$ (a $FC_{màxima}$) | $1{,}00$ | Sostre conservador: el model no arriba a representar el RER $>1{,}00$ real que es dona en esforços gairebé màxims (§5) |
+| $R_{basal}$ (a i per sota del punt de sortida del repòs; esforç suau, aprox. 50% $VO_{2max}$) | $0{,}86$ | Ciclistes entrenats en dejú: $0{,}82$ en repòs i $0{,}86$ al 41% del $VO_{2pic}$ (Goedecke et al., 2000); menjar fa pujar el RER a baixa intensitat (Bergman & Brooks, 1999; Achten & Jeukendrup, 2003). Rang plausible $0{,}82$-$0{,}90$ |
+| $R_{LT_1}$ | $0{,}91$ | $\approx 0{,}90$ al 63% del $VO_{2pic}$ fins i tot en dejú (Goedecke et al., 2000); $\approx 0{,}90$-$0{,}93$ al primer llindar ventilatori en ciclistes aficionats que han menjat (estimat a partir de les taxes d'oxidació de substrats publicades per Martínez-Noguera et al., 2020). Rang plausible $0{,}88$-$0{,}94$ |
+| $R_{LT_2}$ | $0{,}98$ | $0{,}976$ al 80% del $VO_{2pic}$ (Goedecke et al., 2000); $\approx 0{,}99$ al segon llindar ventilatori, però $0{,}90$ al propi màxim estat estacionari de lactat en ciclistes aficionats (Peinado et al., 2016). Rang plausible $0{,}93$-$1{,}00$ |
+| $R_{max}$ (a $FC_{màxima}$) | $1{,}00$ | Sostre: el $RER>1{,}00$ mesurat en esforços gairebé màxims és CO2 derivat del bicarbonat, no oxidació de substrats, i les equacions de §3 només són vàlides per a $RER\le 1$ (§10.3) |
+
+Aquests valors descriuen els primers 30-60 minuts típics d'un esforç estable en el
+perfil definit a §10.1. La corba resultant puja lentament per sota de $LT_1$ i més
+ràpid per sobre, que és la forma mesurada en atletes entrenats. El valor pla per sota
+del punt de sortida del repòs és una simplificació: el RER real també va pujant amb la
+intensitat en aquell tram (en dejú, el RER de repòs és d'uns $0{,}80$-$0{,}82$; havent
+menjat, el de repòs i d'exercici molt suau és d'uns $0{,}85$-$0{,}90$).
 
 **Limitacions del model**: aquesta interpolació assumeix que $RER(t)$ respon
-instantàniament a la FC. Fisiològicament, a l'inici de l'exercici la mobilització i
-oxidació de greix triguen uns minuts a activar-se plenament (típicament $10$-$20$
-min), de manera que el RER real puja una mica més ràpid a l'inici del que prediu
-aquest model basat només en FC. Aquest retard s'escurça si l'esportista ha fet un
-escalfament o activitat física prèvia recent, ja que la mobilització d'àcids grassos
-i el flux sanguini al teixit adipós ja estan parcialment activats:
+instantàniament a la FC i es manté igual durant tot l'esforç. En realitat, la
+mobilització de greix triga uns minuts a activar-se a l'inici de l'exercici, i el RER
+tendeix a baixar a mesura que avança l'esforç (§10.2). L'exercici previ ha demostrat augmentar l'oxidació de greix més que un dejú nocturn en
+esportistes de fons d'elit:
 
 > Andersson Hall U, Edin F, Pedersen A, Madsen K. **Whole-body fat oxidation
 > increases more by prior exercise than overnight fasting in elite endurance
@@ -247,13 +272,25 @@ l'abast en cada cas concret).
 
 **Cas particular — $LT_1$ com a fracció de $LT_2$**: quan no es coneix $LT_1$
 directament però sí (una estimació de) $LT_2$, és habitual aproximar-lo com una
-fracció d'aquest, ja que $LT_1$ sol situar-se per sota de $LT_2$ (§5). Aquesta
-fracció depèn del nivell d'entrenament: en població general els dos llindars
-solen quedar més separats, mentre que en un esportista de fons amb bona base
-aeròbica s'apropen més. Aquest model assumeix aquest segon perfil (consistent
-amb els valors de referència de RER triats a §5.1):
+fracció d'aquest. Els estudis de grup que han mesurat la FC en tots dos llindars
+donen proporcions d'uns $0{,}88$-$0{,}91$:
 
-$$LT_1 \approx 0{,}85 \cdot LT_2$$
+| Estudi | Població | Mètode | $LT_1 / LT_2$ (freqüència cardíaca) |
+|---|---|---|---|
+| Nuuttila et al. (2025) | 165 corredors aficionats | lactat en sang | $\approx 0{,}89$ ($80{,}7\pm4{,}9\%$ vs $90{,}6\pm2{,}5\%$ de la $FC_{màxima}$) |
+| Esteve-Lanao et al. (2026) | 1.411 corredors | llindars ventilatoris | $\approx 0{,}91$ |
+| Lucía et al. (2000) | ciclistes d'elit | llindars ventilatoris | $\approx 0{,}88$-$0{,}90$ |
+
+Per això el model fa servir:
+
+$$LT_1 \approx 0{,}89 \cdot LT_2$$
+
+La variació individual al voltant d'aquesta proporció és gran (una desviació estàndard
+d'uns 5% de la $FC_{màxima}$, aproximadament 9 ppm) i només va mostrar relacions febles
+amb el nivell de forma, així que una fracció fixa és una estimació poblacional: un
+$LT_1$ mesurat és sempre millor quan es té. En el mateix estudi, els ancoratges fixos
+en %FC van estimar $LT_1$ amb un error absolut mitjà d'uns 5-7 ppm (Nuuttila et al.,
+2025).
 
 **Cas particular — $I_{onset}$ (sortida del repòs)**: aquest punt és diferent dels
 altres tres perquè **no és quelcom que es pugui mesurar directament ni amb una prova
@@ -274,7 +311,8 @@ disseny del model perquè la transició sigui gradual, no el valor d'una mesura.
 ## 7. Model puntual complet
 
 Ajuntant §3-6: donada la FC en un instant $t$ i els paràmetres personals (pes, FC
-repòs, FC màxima, $LT_2$, $VO_{2max}$), el model calcula, en aquest ordre:
+repòs, FC màxima, $LT_2$, $VO_{2max}$ i, opcionalment, un $LT_1$ mesurat), el model
+calcula, en aquest ordre:
 
 $$\%HRR(t) \;\xrightarrow{\text{§4.1}}\; VO_2(t) \;\xrightarrow{\text{§4.2-4.3}}\; \Big(VO_2(t),\ RER(t)\Big) \;\xrightarrow{\text{§3.1}}\; CHO(t),\ FAT(t)$$
 
@@ -328,7 +366,8 @@ que creix amb la mida del forat.
 ### 8.3. Taxa instantània vs. taxa suavitzada
 
 El total acumulat (§8.2) és, per definició, una suma exacta sense cap suavitzat —
-dona la millor estimació possible de quants grams s'han oxidat en total. Però com a
+és la suma simple de les estimacions puntuals, així que arrossega tota la incertesa
+del model (§10). Però com a
 **valor de referència puntual** per prendre decisions durant l'esforç (per exemple,
 de fueling), $CHO(t)$ instantani i el total acumulat donen dos tipus d'informació molt
 diferents:
@@ -381,7 +420,62 @@ Aquesta font estableix, a grans trets:
   **carbohidrats de transport múltiple** (barreges de glucosa + fructosa), ja que una
   sola font de carbohidrat no es pot absorbir a un ritme tan alt.
 
-## 10. Taula resum de referències
+Són guies d'**ingesta**, no objectius d'oxidació: durant l'exercici moderat-intens, el
+ritme d'oxidació de carbohidrats normalment supera el que es pot ingerir i absorbir, i la
+diferència la cobreixen el glicogen muscular i hepàtic. Comparar el ritme d'oxidació
+estimat amb aquests límits d'ingesta (uns 60 g/h amb una sola font de carbohidrat, fins
+a uns 90 g/h amb carbohidrats de transport múltiple) és una manera aproximada de veure
+quanta part de l'esforç s'està agafant dels dipòsits de glicogen del cos — una guia, no
+una prescripció.
+
+## 10. Supòsits, abast i precisió
+
+### 10.1. Per a qui està calibrat el model
+
+Els valors de referència de RER (§5.1) i la proporció $LT_1/LT_2$ (§6) descriuen un
+**esportista de fons aficionat-entrenat típic** (córrer o ciclisme, $VO_{2max}$
+aproximadament 45-60 ml·kg⁻¹·min⁻¹) que:
+
+- fa una **dieta mixta normal** (un 50-55% de l'energia en forma de carbohidrats);
+- s'exercita **havent menjat** (no després d'un dejú nocturn ni d'un llarg temps des
+  de l'últim àpat) i sense càrrega de carbohidrats;
+- fa **exercici estable** a temperatura moderada;
+- i és a la **primera hora, més o menys**, de l'esforç.
+
+### 10.2. Què allunya el RER real del model
+
+| Factor | Efecte sobre el RER real | Efecte sobre l'estimació |
+|---|---|---|
+| Dejú, baix en carbohidrats, cetogènic o adaptat al greix | Més baix (el dejú baixa el RER a intensitat suau-moderada; Bergman & Brooks, 1999; Achten & Jeukendrup, 2003) | CHO sobreestimat, FAT subestimat |
+| Àpat ric en carbohidrats poc abans | Més alt | CHO lleugerament subestimat |
+| Carbohidrats ingerits durant l'esforç | Més alt | CHO lleugerament subestimat (el model no sap res de la ingesta) |
+| Esportistes d'elit o molt entrenats | Més baix a la mateixa intensitat relativa (aprox. $0{,}88$ vs $0{,}95$ en corredors ben entrenats vs aficionats durant sèries de 4 min a aprox. 89% del $VO_{2max}$; Hetlelid et al., 2015) | CHO sobreestimat |
+| Persones poc entrenades | Més alt; la relació FC-$VO_2$ i els llindars també són menys fiables | CHO subestimat, amb més error |
+| Dones | Més baix de mitjana (aprox. $0{,}03$; Rothschild et al., 2022; Venables et al., 2005) | CHO lleugerament sobreestimat |
+| Durada de l'esforç | El RER tendeix a baixar a mesura que s'esgota el glicogen (aprox. $0{,}0004$-$0{,}0006$ per minut; Rothschild et al., 2022) | CHO cada cop més sobreestimat a la segona hora i després |
+| Calor, deshidratació, deriva cardíaca | La FC puja a càrrega constant, mentre que el RER real tendeix a baixar | VO2 i CHO sobreestimats |
+| Córrer vs ciclisme | L'oxidació de greix és més alta corrent (Achten et al., 2003); la majoria de dades de referència són de ciclisme | CHO una mica sobreestimat corrent |
+
+### 10.3. Rang d'intensitat
+
+Les equacions de §3 es van deduir per a exercici moderat (aproximadament 50-75% del
+$VO_{2max}$) amb $RER<1$; fora d'aquest rang són una extrapolació. Per sobre de
+$LT_2$ el model només compta l'ús **oxidatiu** de carbohidrats: la glucòlisi
+anaeròbica també consumeix glicogen però no apareix a l'oxidació calculada a partir
+de l'intercanvi de gasos, de manera que l'ús total de glicogen en intervals durs queda
+subestimat.
+
+### 10.4. Precisió
+
+La dispersió individual del RER a una intensitat relativa donada (desviació estàndard
+d'uns $0{,}04$; Goedecke et al., 2000) es tradueix, per a un esportista de referència
+(70 kg, $VO_{2max}$ 50) a 140 ppm, en uns $\pm 24$ g/h de CHO (aprox. $\pm 20\%$). A
+això s'hi suma l'error de l'estimació del $VO_2$ (§4.3), que depèn de la qualitat de
+les entrades ($FC_{màxima}$, $FC_{repòs}$, $VO_{2max}$, $LT_2$). Cal prendre el resultat com
+una **indicació útil de l'ordre de magnitud i de les tendències dins d'una sessió**, no
+com una mesura.
+
+## 11. Taula resum de referències
 
 | Ref. | Ús al model | Citació |
 |---|---|---|
@@ -395,3 +489,17 @@ Aquesta font estableix, a grans trets:
 | Jeukendrup (2014) | Guies d'ingesta de CHO durant l'exercici (fueling) | *Sports Med* 44(Suppl 1):S25-S33 |
 | Hunter (1986) | Mitjana mòbil exponencial (EMA) com a tècnica de suavitzat | *J Quality Technology* 18(4):203-210 |
 | Andersson Hall et al. (2016) | Escalfament/exercici previ escurça el retard de mobilització de greix | *Appl Physiol Nutr Metab* 41(4):430-437 |
+| Péronnet & Massicotte (1991) | Taula de quocient respiratori no-proteic (repartiment 50/50 a $RER\approx 0{,}85$) | *Can J Sport Sci* 16(1):23-29 |
+| Goedecke et al. (2000) | RER mesurat en repòs i al 41-80% del $VO_{2pic}$ en ciclistes entrenats; variabilitat entre individus | *Am J Physiol Endocrinol Metab* 279(6):E1325-E1334 |
+| Venables, Achten & Jeukendrup (2005) | Oxidació màxima de greix cap al 48% del $VO_{2max}$ en 300 homes i dones | *J Appl Physiol* 98(1):160-167 |
+| Bergman & Brooks (1999) | RER en homes entrenats i no entrenats, alimentats vs en dejú | *J Appl Physiol* 86(2):479-487 |
+| Achten & Jeukendrup (2003) | Els carbohidrats previs a l'exercici desplacen l'ús de substrats cap als carbohidrats | *J Sports Sci* 21(12):1017-1024 |
+| Achten, Venables & Jeukendrup (2003) | L'oxidació de greix és més alta corrent que en bicicleta | *Metabolism* 52(6):747-752 |
+| Martínez-Noguera et al. (2020) | Taxes d'oxidació de substrats als llindars ventilatoris en ciclistes aficionats (dades d'un estudi de suplementació) | *Nutrients* 12(12):3911 |
+| Peinado et al. (2016) | $VCO_2/VO_2$ als llindars ventilatoris i al màxim estat estacionari de lactat en ciclistes aficionats | *Biol Sport* 33(4):373-380 |
+| Hetlelid et al. (2015) | RER en corredors entrenats de forma recreativa vs ben entrenats | *BMJ Open Sport Exerc Med* 1(1):e000047 |
+| Rothschild et al. (2022) | Anàlisi de modelització de la dieta, durada, sexe i altres factors sobre l'oxidació de substrats en ciclisme | *Sports Med* 52(11):2775-2795 |
+| Edvardsen, Hem & Anderssen (2014) | Valors de pic de RER en esforç màxim | *PLoS One* 9(1):e85276 |
+| Nuuttila et al. (2025) | $LT_1$ i $LT_2$ com a %$FC_{màxima}$ i precisió dels ancoratges fixos en %FC en corredors aficionats | *Eur J Appl Physiol* 125(8):2161-2171 |
+| Esteve-Lanao et al. (2026) | FC als llindars ventilatoris en 1.411 corredors | *Sports (Basel)* 14(1):29 |
+| Lucía et al. (2000) | FC als llindars ventilatoris en ciclistes d'elit | *Med Sci Sports Exerc* 32(10):1777-1782 |

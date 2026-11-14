@@ -23,8 +23,8 @@ rate. No extra sensors, no manual logging. Works on watches and Edge bike comput
 - **CHO (g)** — total carbohydrate burned so far this session.
 - **CHO avg (g/h)** — a smoothed, real-time carbohydrate burn rate, color-coded as a
   fueling guide: green, orange, or red depending on how your current burn rate
-  compares to standard sports-nutrition intake guidelines for that point in your
-  workout.
+  compares to how much carbohydrate you can realistically absorb while exercising
+  (about 60 g/h, up to about 90 g/h with multiple-transportable carbs).
 - **FAT (g)** — total fat burned so far this session.
 - A small **zone indicator (Z1-Z5)**, colored the same way Garmin Connect colors your
   heart rate zones, so you can see effort and fueling status at a glance.
@@ -36,8 +36,8 @@ physiology:
 - Heart-rate-based VO2 estimation (heart rate reserve method).
 - The classic Frayn equations for calculating carbohydrate and fat oxidation from
   gas-exchange variables.
-- Duration-aware carbohydrate fueling bands based on published sports-nutrition
-  guidelines for endurance exercise.
+- Carbohydrate fueling thresholds based on published sports-nutrition guidelines for
+  endurance exercise.
 
 **Works out of the box**
 
@@ -68,13 +68,17 @@ Connect's Physiological Metrics if you've set one.
 
 **A note on accuracy**
 
-This app provides an estimate based on established exercise science models, calibrated
-for endurance athletes. It is a training aid, not a medical or diagnostic device, and
-should not replace professional medical or nutritional advice.
+This app provides an estimate based on established exercise science models. It is
+calibrated for recreational-to-trained endurance athletes (roughly VO2max 45-60)
+eating a normal mixed diet and training after a meal. If you train fasted, follow a
+low-carb or ketogenic diet, or are an elite athlete, it will tend to overestimate
+carbohydrate burn; if you are untrained, to underestimate it. Long sessions, heat and
+dehydration also push the estimate up. It is a training aid, not a medical or
+diagnostic device, and should not replace professional medical or nutritional advice.
 
-Tip: fat burning naturally takes a few minutes to ramp up at the start of exercise, so
-readings in the first 10-20 minutes will lean more toward carbs than later in the
-session — a short warm-up beforehand can reduce this delay.
+Tip: the estimate is most reliable for steady effort once you are warmed up. In the
+first minutes of an effort and in very long sessions the real fuel mix shifts, so read
+the numbers as a guide rather than a measurement.
 
 **Review it after your workout.** The results are saved in the activity: once your
 watch syncs, Garmin Connect shows charts of accumulated CHO, accumulated FAT and
@@ -84,7 +88,22 @@ CHO rate, plus total CHO, total FAT and average CHO in the activity summary.
 underlying science and references — is available at
 https://irazuzta.github.io/ChoFatMetabolic/
 
-## What's New (version 0.4.1 — this version)
+## What's New (version 0.5.0 — this version)
+
+```
+Improved carbohydrate/fat estimate for athletes on a normal diet. The previous
+version assumed a fat-adapted or fasted profile, so it underestimated carbohydrate
+burn at low and moderate intensity. The model now assumes you have eaten: at a
+steady moderate effort the CHO figures are noticeably higher (roughly two thirds
+higher around 140 bpm for a typical athlete), while at and above your lactate
+threshold they are unchanged. The default aerobic threshold (LT1) is now 89% of
+LT2, based on published data. The CHO color bands now compare your burn rate with
+how much carbohydrate you can actually absorb: after the first 45 minutes, green
+under 60 g/h, orange 60-90 g/h, red above. The documentation explains the profile
+the estimate is calibrated for (diet, fed state, training level) and its limits.
+```
+
+## What's New (version 0.4.1)
 
 ```
 Reliability fixes. Starting a new activity now always begins from zero (previously

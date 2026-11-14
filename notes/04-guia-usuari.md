@@ -6,6 +6,15 @@ com els pots configurar. Si vols saber com es calcula tot per dins, mira
 [`01-base-teorica.md`](01-base-teorica.md) (el model científic) o
 [`02-funcionament-app.md`](02-funcionament-app.md) (com està implementat).
 
+> **Per a qui és?** Les estimacions estan calibrades per a esportistes de fons
+> aficionats-entrenats (aproximadament VO2max 45-60) que fan una dieta mixta normal i
+> entrenen havent menjat. Si entrenes en dejú, fas una dieta baixa en carbohidrats o
+> cetogènica, o ets un esportista d'elit, l'app tendirà a **sobreestimar** el consum de
+> carbohidrats; si ets poc entrenat, tendirà a **subestimar-lo**. Les sessions llargues,
+> la calor i la deshidratació també fan pujar l'estimació. Pren els números com una
+> bona indicació de l'ordre de magnitud i de les tendències, no com una mesura de
+> laboratori.
+
 ## 1. Què veus a la pantalla
 
 ```
@@ -46,7 +55,7 @@ coneixes el valor real i vols més precisió.
 | **Resting HR** | La teva freqüència cardíaca en repòs total | Es llegeix del teu perfil de Garmin |
 | **Max HR** | La teva freqüència cardíaca màxima | S'agafa el sostre de la zona 5 configurada per al teu esport actual (córrer, ciclisme...) |
 | **LT2 Threshold** | El teu llindar anaeròbic (la intensitat a partir de la qual comences a acumular fatiga ràpidament) | S'agafa el sostre de la zona 4 configurada per al teu esport actual |
-| **LT1 Threshold** | El teu llindar aeròbic (una mica per sota de l'anterior) | Es calcula com el 85% del LT2 |
+| **LT1 Threshold** | El teu llindar aeròbic (una mica per sota de l'anterior) | Es calcula com el 89% del LT2 |
 | **VO2max** | La teva capacitat aeròbica màxima | Es llegeix del teu perfil de Garmin — l'estimació de córrer o de ciclisme, segons l'activitat actual |
 
 En un rellotge Garmin, l'"esport actual" sol ser Córrer; en una **bicicleta
@@ -76,18 +85,39 @@ no de freqüència cardíaca. Per tant, si ets ciclista, val la pena introduir
 no els watts en si), o la teva FC de llindar de lactat de ciclisme de les
 Mètriques Fisiològiques de Garmin Connect si ja en tens una configurada.
 
+**Com trobar el teu LT1 (opcional)**: si deixes `LT1 Threshold` a 0, l'app fa servir el
+89% del teu LT2, que és la mitjana dels estudis publicats en corredors i ciclistes
+aficionats — però els valors individuals varien aproximadament ±9 ppm al voltant
+d'aquest. Si en vols un de millor, per ordre de fiabilitat:
+
+1. Una **prova de laboratori** (test de lactat per esglaons o de gasos): introdueix la
+   FC al primer augment de lactat, o al primer llindar ventilatori (VT1).
+2. Una **prova a casa amb banda de pit i un mètode basat en HRV** (la rampa "DFA-alpha1 =
+   0,75", que ofereixen algunes apps d'entrenament): fes-la descansat, repeteix-la dos
+   dies diferents i contrasta-la amb la FC més alta a la qual encara pots parlar en
+   frases completes. La fatiga fa que aquest mètode doni un valor massa baix.
+3. Si no n'estàs segur, **deixa-ho a 0**. Sisplau, no facis servir "180 menys l'edat":
+   no té validació per a aquest ús.
+
 ## 5. Què signifiquen els colors
 
 ### Color del CHO avg (consell de fueling)
 
-| Temps transcorregut | Verd | Taronja | Vermell |
-|---|---|---|---|
-| Menys de 45 min | (sempre verd, els dipòsits encara són plens) | — | — |
-| Entre 45 min i 2h | menys de 30 g/h | 30-60 g/h | més de 60 g/h |
-| Més de 2h | menys de 60 g/h | 60-90 g/h | més de 90 g/h |
+Durant els primers 45 minuts sempre és verd (els dipòsits de glicogen encara són
+plens). Després:
 
-El vermell no vol dir "alarma" — només que, segons guies esportives habituals,
-et podries estar quedant curt de carbohidrats per a la durada de l'esforç.
+| Verd | Taronja | Vermell |
+|---|---|---|
+| menys de 60 g/h | 60-90 g/h | 90 g/h o més |
+
+Aquests límits segueixen la quantitat de carbohidrats que una persona pot absorbir de
+manera realista mentre fa exercici: uns 60 g/h d'una sola font, fins a uns 90 g/h amb
+barreges de glucosa + fructosa.
+
+El vermell no vol dir "alarma" — vol dir que cremes carbohidrats més de pressa del que
+pots reposar mentre fas exercici, així que la diferència surt dels dipòsits de
+glicogen. Això és normal a intensitat moderada-alta. És una pista per alimentar-te
+d'hora i continuar menjant en esforços llargs.
 
 ### Color de la zona (Z1..Z5)
 

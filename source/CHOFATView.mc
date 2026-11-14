@@ -60,17 +60,16 @@ class CHOFATView extends WatchUi.DataField {
     hidden var choAvgEmaGH as Lang.Float = 0.0;
     hidden var emaInicialitzada as Lang.Boolean = false;
 
-    // --- Llindars de fueling de CHO (g/h), basats en guies esportives
-    //     habituals (Jeukendrup): les bandes recomanades pugen amb la
-    //     durada de l'esforç, perquè el dipòsit de glicogen encara és ple
-    //     als primers minuts i no cal amoïnar-se pel consum encara.
-    const FUELING_FASE1_MIN = 45.0;   // abans d'això, no s'acolareix (dipòsits plens)
-    const FUELING_FASE2_MIN = 120.0;  // llindar de pas a esforços llargs
-
-    const CHO_VERD_FASE2 = 30.0;      // esforços d'1h-2h: guia habitual 30-60 g/h
-    const CHO_TARONJA_FASE2 = 60.0;
-    const CHO_VERD_FASE3 = 60.0;      // esforços >2h: guia habitual 60-90 g/h
-    const CHO_TARONJA_FASE3 = 90.0;
+    // --- Llindars de color del CHO (g/h). Comparen el ritme d'oxidació de
+    //     CHO amb el que es pot absorbir realment durant l'exercici
+    //     (Jeukendrup): ~60 g/h amb una sola font de carbohidrat i fins a
+    //     ~90 g/h amb barreges de transport múltiple. Verd = es pot cobrir
+    //     amb una ingesta normal; taronja = cal una ingesta alta; vermell =
+    //     per sobre del que es pot absorbir (s'està gastant glicogen).
+    //     Als primers minuts els dipòsits són plens i no s'acolareix.
+    const FUELING_FASE1_MIN = 45.0;   // abans d'això, sempre verd (dipòsits plens)
+    const CHO_VERD = 60.0;
+    const CHO_TARONJA = 90.0;
 
     // --- Estat per al petit indicador de zona de FC (Z1..Z5) ---
     hidden var zonesFC as Lang.Array = [];
@@ -85,12 +84,14 @@ class CHOFATView extends WatchUi.DataField {
     hidden var vo2max as Lang.Float = 50.0;
     hidden var lt1Fixat as Lang.Number = 0; // 0 = no fixat, s'estima com a PCT_LT1*lt2
 
-    // --- Paràmetres del model metabòlic (calibrats per a esportistes de fons,
-    //     mateixos valors que la versió d'escriptori) ---
+    // --- Paràmetres del model metabòlic: esportistes aficionats-entrenats
+    //     (VO2max ~45-60), dieta mixta normal, estat d'alimentat, esforç
+    //     estable. Esportistes d'elit o adaptats al greix: el CHO es
+    //     sobreestima; poc entrenats: se subestima (veure documentació). ---
     const PCT_ACTIVACIO_CHO = 0.70; // Inici Zona 2
-    const PCT_LT1 = 0.85;           // Llindar Aeròbic (% del LT2)
-    const RER_BASAL = 0.72;
-    const RER_LT1 = 0.82;
+    const PCT_LT1 = 0.89;           // Llindar Aeròbic (% del LT2)
+    const RER_BASAL = 0.86;         // RER a baixa intensitat (alimentat)
+    const RER_LT1 = 0.91;
     const RER_LT2 = 0.98;
     const RER_MAX = 1.00;
 
@@ -469,30 +470,18 @@ class CHOFATView extends WatchUi.DataField {
     }
 
     // ------------------------------------------------------------------
-    // Codi de colors segons la taxa de consum de CHO (g/h), amb bandes
-    // que pugen amb la durada de l'esforç (guies esportives tipus
-    // Jeukendrup): als primers 45 min no cal amoïnar-se (glicogen ple);
-    // d'1h a 2h la banda de fueling habitual és 30-60 g/h; per sobre de
-    // 2h puja a 60-90 g/h.
+    // Codi de colors segons la taxa d'oxidació de CHO (g/h): als primers
+    // 45 min sempre verd (glicogen ple); després, verd fins a 60 g/h,
+    // taronja fins a 90 g/h i vermell per sobre (veure CHO_VERD/CHO_TARONJA).
     // ------------------------------------------------------------------
     function colorPerCho(valorGH as Lang.Float, minutsSessio as Lang.Float) as Graphics.ColorType {
         if (minutsSessio < FUELING_FASE1_MIN) {
             return Graphics.COLOR_GREEN;
         }
 
-        var verd;
-        var taronja;
-        if (minutsSessio < FUELING_FASE2_MIN) {
-            verd = CHO_VERD_FASE2;
-            taronja = CHO_TARONJA_FASE2;
-        } else {
-            verd = CHO_VERD_FASE3;
-            taronja = CHO_TARONJA_FASE3;
-        }
-
-        if (valorGH < verd) {
+        if (valorGH < CHO_VERD) {
             return Graphics.COLOR_GREEN;
-        } else if (valorGH < taronja) {
+        } else if (valorGH < CHO_TARONJA) {
             return Graphics.COLOR_ORANGE;
         } else {
             return Graphics.COLOR_RED;

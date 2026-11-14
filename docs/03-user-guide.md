@@ -6,6 +6,14 @@ it. If you want to know how everything is calculated under the hood, see
 [Theoretical basis](01-theoretical-basis.md) (the scientific model) or
 [How the app works](02-app-implementation.md) (how it's implemented).
 
+> **Who is it for?** The estimates are calibrated for recreational-to-trained
+> endurance athletes (roughly VO2max 45-60) who eat a normal mixed diet and train
+> after eating. If you train fasted, follow a low-carb or ketogenic diet, or are an
+> elite athlete, the app will tend to **overestimate** carbohydrate burn; if you are
+> untrained, it will tend to **underestimate** it. Long sessions, heat and
+> dehydration also push the estimate up. Think of the numbers as a good indication
+> of order of magnitude and trends, not as a lab measurement.
+
 ## 1. What you see on screen
 
 ```
@@ -44,7 +52,7 @@ touch them if you know the real value and want more accuracy.
 | **Resting HR** | Your heart rate at complete rest | Read from your Garmin profile |
 | **Max HR** | Your maximum heart rate | Taken from the ceiling of zone 5 configured for your current sport (running, cycling...) |
 | **LT2 Threshold** | Your anaerobic threshold (the intensity above which you start accumulating fatigue quickly) | Taken from the ceiling of zone 4 configured for your current sport |
-| **LT1 Threshold** | Your aerobic threshold (a bit below the previous one) | Calculated as 85% of LT2 |
+| **LT1 Threshold** | Your aerobic threshold (a bit below the previous one) | Calculated as 89% of LT2 |
 | **VO2max** | Your maximum aerobic capacity | Read from your Garmin profile — the running or cycling estimate, matching your current activity |
 
 On a Garmin watch, "current sport" is usually Running; on an **Edge bike
@@ -72,19 +80,39 @@ setting `LT2 Threshold` by hand: use the heart rate from your FTP test (the
 steady effort, not the wattage itself), or your cycling Lactate Threshold Heart
 Rate from Garmin Connect's Physiological Metrics if you've set one.
 
+**Finding your LT1 (optional)**: if you leave `LT1 Threshold` at 0, the app uses
+89% of your LT2, which is the average found in published studies of recreational
+runners and cyclists — but individual values vary by roughly ±9 bpm around it. If
+you want a better value, in order of reliability:
+
+1. A **lab test** (lactate step test or gas-exchange test): enter the heart rate at
+   your first lactate rise, or at your first ventilatory threshold (VT1).
+2. A **home test with a chest strap and an HRV-based method** (the "DFA-alpha1 =
+   0.75" ramp test, offered by some training apps): do it fresh, repeat it on two
+   different days, and check it against the highest heart rate at which you can
+   still speak in full sentences. Fatigue makes this method read too low.
+3. If you are not sure, **leave it at 0**. Please don't use "180 minus age" — it
+   has no validation for this purpose.
+
 ## 5. What the colors mean
 
 ### CHO avg color (fueling guidance)
 
-| Elapsed time | Green | Orange | Red |
-|---|---|---|---|
-| Under 45 min | (always green, glycogen stores are still full) | — | — |
-| 45 min to 2h | under 30 g/h | 30-60 g/h | over 60 g/h |
-| Over 2h | under 60 g/h | 60-90 g/h | over 90 g/h |
+During the first 45 minutes it's always green (your glycogen stores are still
+full). After that:
 
-Red doesn't mean "alarm" — it just means that, according to common
-sports-nutrition guidelines, you might be falling short on carbohydrate intake
-for the duration of your effort.
+| Green | Orange | Red |
+|---|---|---|
+| under 60 g/h | 60-90 g/h | 90 g/h or more |
+
+These limits follow how much carbohydrate a person can realistically absorb while
+exercising: about 60 g/h from a single source, up to about 90 g/h with glucose +
+fructose blends.
+
+Red doesn't mean "alarm" — it means you are burning carbohydrate faster than you
+can replace it while exercising, so the difference is coming out of your glycogen
+stores. That is normal at moderate-to-hard intensity. It's a hint to fuel early and
+keep eating during long efforts.
 
 ### Zone color (Z1..Z5)
 

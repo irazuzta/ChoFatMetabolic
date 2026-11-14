@@ -38,3 +38,23 @@ Per fer-ho bé:
 - Camps per volta (LAP) per al fueling per etapes.
 - Multisport: el perfil es llegeix un cop i a `onTimerReset()`; en un multisport els trams
   mantindrien el VO2max i les zones del primer esport.
+
+## Model (després de la 0.5.0)
+
+- **Sense terme de durada:** el RER real baixa uns 0,0004-0,0006 per minut a mesura que
+  avança l'esforç; el CHO es va sobreestimant a la segona hora i després (~10-15% a la
+  segona hora, més endavant). Descartat de moment per mantenir l'app simple; si es fa,
+  seria un únic factor suau, no un model nou.
+- **Sense ajust per sexe** (les dones tenen un RER ~0,03 més baix de mitjana): descartat,
+  la dispersió individual és més gran que l'efecte.
+- **Script de Python d'escriptori:** cal posar-hi les mateixes constants que l'app
+  (`RER_BASAL=0.86`, `RER_LT1=0.91`, `RER_LT2=0.98`, `RER_MAX=1.00`, `PCT_LT1=0.89`) i la
+  mateixa escala de colors del CHO (verd <60 g/h, taronja 60-90, vermell >=90, després dels
+  45 min). Si no, els resultats d'app i script divergeixen.
+- **Referències no verificades en línia** (la cita coincideix amb la memòria, però no s'han
+  pogut obrir): Frayn 1983, Brooks & Mercier 1994, Hunter 1986, Karvonen 1957, i el text
+  original de Jeukendrup & Wallis 2005 (el rang de validesa 50-75% VO2max ve de cites
+  secundàries). Els valors de RER de Martínez-Noguera 2020 s'han retrobat a partir de les
+  taxes d'oxidació publicades, no estan escrits tal qual a l'article.
+- Comprovar amb una activitat real que el CHO nou té sentit comparat amb la teva experiència
+  de fueling.

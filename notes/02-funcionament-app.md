@@ -23,8 +23,8 @@ en dos moments diferents:
 
 ## 2. Resolució del perfil fisiològic (`carregarPerfil()`)
 
-En crear-se el data field, es resolen els 5 paràmetres físiologics que alimenten el
-model (pes, FC de repòs, FC màxima, LT2, VO2max). Per a cadascun, la prioritat és:
+En crear-se el data field, es resolen els 6 paràmetres físiologics que alimenten el
+model (pes, FC de repòs, FC màxima, LT2, LT1, VO2max). Per a cadascun, la prioritat és:
 
 1. **Valor manual** (`Properties`, a `resources/settings/properties.xml`) si l'usuari
    n'ha introduït un > 0.
@@ -36,15 +36,19 @@ Nota important (documentada perquè costa de trobar): els valors manuals només 
 poden editar des de la pantalla de configuració de la Connect IQ Store, que **no
 funciona per a apps carregades per sideload** (veure §7) — la interfície de settings es
 descarrega dinàmicament segons l'ID de l'app registrat a la Store, i un sideload no hi
-té accés. Per tant, a la pràctica, mentre l'app no es publiqui, sempre funcionarà en
+té accés. Per tant, a la pràctica, una build carregada per sideload sempre funciona en
 mode automàtic.
 
-Per a `FCmax` i `LT2`, com que Garmin no els exposa directament (veure §5 del document
-teòric), es dedueixen del `getHeartRateZones()` del rellotge: sostre de zona 5 → FCmax,
+Per a `FCmax` i `LT2`, com que Garmin no els exposa directament, es dedueixen
+del `getHeartRateZones()` del rellotge: sostre de zona 5 → FCmax,
 sostre de zona 4 → LT2. Aquesta crida ja és sensible a l'esport actual
 (`UserProfile.getCurrentSport()`), així que en un dispositiu Edge (bicicleta
 computadora) agafa correctament les zones de **ciclisme** configurades, no les de
-córrer. Al final de `carregarPerfil()` hi ha una comprovació de coherència: si `FCmax`
+córrer. Cal tenir en compte que amb les zones per defecte de Garmin (en %FCmax) el
+sostre de la zona 4 és simplement el 90% de la FCmax: proper al LT2 mitjà de la
+població (aprox. 90,6% de la FCmax en corredors aficionats; Nuuttila et al., 2025),
+però no és una mesura. Les zones basades en un llindar de lactat mesurat
+s'ajusten molt millor. Al final de `carregarPerfil()` hi ha una comprovació de coherència: si `FCmax`
 no queda per sobre de `FCrepòs`, o si `LT2` no queda entremig, es corregeix
 automàticament (mai es deixa que valors absurds trenquin silenciosament el càlcul de
 HRR/RER més endavant).
@@ -70,8 +74,9 @@ laboratori, així que no s'ofereix com a valor manual (§6 del document teòric)
 $LT_1$, en canvi, sí és un llindar fisiològic real que un esportista pot conèixer
 d'una prova pròpia, així que segueix el mateix patró que la resta del perfil: si
 l'usuari en introdueix un valor manual (`lt1Manual`, propietat > 0) i queda coherent
-(entre `fcRepos` i `lt2`), es fa servir directament; si no, es descarta en silenci i
-es torna a l'estimació `PCT_LT1 * lt2` (`PCT_LT1 = 0.85`).
+(per sobre de `fcRepos` i del punt d'activació de CHO `0.70 * lt2`, i per sota de
+`lt2`), es fa servir directament; si no, es descarta en silenci i es torna a
+l'estimació `PCT_LT1 * lt2` (`PCT_LT1 = 0.89`).
 
 ## 3. Cicle de càlcul (`compute()`)
 
@@ -88,7 +93,11 @@ Per cada mostra vàlida (amb FC disponible):
    llindars de `zonesFC` (guardats a `carregarPerfil()`), per a l'indicador petit
    Z1-Z5.
 3. **HRR → VO2** i **RER per zones** → grams de CHO/FAT per minut, seguint exactament
-   les fórmules descrites al document teòric (§3-7).
+   les fórmules descrites al document teòric (§3-7). Les constants de referència són
+   a dalt de la classe: `RER_BASAL = 0.86`, `RER_LT1 = 0.91`, `RER_LT2 = 0.98`,
+   `RER_MAX = 1.00`, `PCT_LT1 = 0.89` i `PCT_ACTIVACIO_CHO = 0.70`; el document teòric
+   explica d'on surten (§5.1, §6) i per a qui estan calibrades (§10). La HRR es
+   limita al rang 0-1 i les taxes negatives de CHO/FAT es posen a 0.
 4. **Acumulació**: `totalChoGrams` i `totalFatGrams` sumen els grams d'aquest tick
    (la discretització de la integral CHO_total/FAT_total, veure document teòric §8.2).
 5. **Mitjana mòbil exponencial** (`choAvgEmaGH`): és la tècnica de suavitzat concreta
@@ -188,14 +197,18 @@ FC, que és el mateix independentment de quin data field es mostri.
 
 ### 5.1. Consum de CHO (fueling)
 
-El valor de `CHO avg (g/h)` s'acolora amb `colorPerCho(valor, minutsSessió)` seguint
-les bandes esglaonades per temps descrites al document teòric (§9):
+El valor de `CHO avg (g/h)` s'acolora amb `colorPerCho(valor, minutsSessió)`.
+Els llindars comparen el ritme d'oxidació de CHO amb la quantitat de carbohidrats que una
+persona pot absorbir de manera realista mentre fa exercici (document teòric §9: uns
+60 g/h d'una sola font, fins a uns 90 g/h amb carbohidrats de transport múltiple):
 
 | Temps transcorregut | Verd | Taronja | Vermell |
 |---|---|---|---|
-| < 45 min | (sempre verd) | — | — |
-| 45 min - 2h | < 30 g/h | 30-60 g/h | > 60 g/h |
-| > 2h | < 60 g/h | 60-90 g/h | > 90 g/h |
+| < 45 min | (sempre verd, dipòsits de glicogen plens) | — | — |
+| ≥ 45 min | < 60 g/h | 60-90 g/h | ≥ 90 g/h |
+
+El vermell vol dir, doncs, "cremes més carbohidrats dels que pots reposar", cosa normal
+a intensitat moderada-alta: la diferència surt dels dipòsits de glicogen.
 
 ### 5.2. Zona de FC
 
@@ -237,13 +250,17 @@ d'un fitxer local.
 
 ## 8. Limitacions conegudes
 
-- El model és una aproximació basada exclusivament en FC; no capta l'efecte de la
-  durada sobre la despesa relativa de substrats (glicogen que es va esgotant a la
-  mateixa intensitat relativa amb el pas del temps), ja que és inherentment un model
-  instantani.
+- El model és una aproximació basada exclusivament en FC, calibrada per a esportistes
+  aficionats-entrenats amb dieta mixta normal i havent menjat (document teòric §10).
+  No capta l'efecte de la durada (el RER tendeix a baixar a mesura que avança
+  l'esforç, així que el CHO es va sobreestimant en sessions llargues), ni la dieta, el
+  dejú, el sexe, la calor o la deriva cardíaca. Els esportistes d'elit o adaptats al
+  greix veuran el CHO sobreestimat i els poc entrenats, subestimat. Els números són una
+  indicació de l'ordre de magnitud i de les tendències, no una mesura.
 - `FCmax` i `LT2` són estimacions basades en zones de FC configurades, no mesures
   directes — la seva precisió depèn de com l'usuari (o Garmin) hagi configurat
-  aquestes zones.
+  aquestes zones. Amb les zones per defecte de Garmin (en %FCmax), el sostre de la
+  zona 4 és només el 90% de la FCmax.
 - Els resultats es desen a l'activitat (camps FIT propis) i Garmin Connect els
   mostra un cop sincronitzada, però els serveis que ignoren els camps de
   desenvolupador (p.ex. Strava) no els ensenyaran; els valors sí que són al `.FIT`.

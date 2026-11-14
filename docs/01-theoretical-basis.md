@@ -6,6 +6,12 @@ variable: heart rate (HR). The physiology and mathematics
 of the model are presented together with their scientific references, deriving it
 step by step from the objective to its final form.
 
+> **Scope.** The reference values of this model are chosen for **recreational-to-trained
+> endurance athletes** (roughly $VO_{2max}$ 45-60 ml·kg⁻¹·min⁻¹) who eat a **normal
+> mixed diet** and exercise in a **fed state**, at a steady effort. For other
+> profiles — elite or fat-adapted athletes, fasted or low-carbohydrate training,
+> untrained people — the estimate is biased in a known direction (see §10).
+
 ## 1. Objective
 
 We want to know, at any instant $t$ during an activity, the **oxidation rate** of
@@ -159,45 +165,58 @@ $$VO_2(t)\ [\text{L/min}] = \displaystyle\frac{VO_{2,relative}(t)\cdot weight\ (
 the quality of $HR_{rest}$, $HR_{max}$ and $VO_{2max}$ as model inputs — in
 practice, these three values are themselves often estimates too (not direct
 laboratory measurements), which introduces an additional source of accumulated
-uncertainty in the final result.
+uncertainty in the final result. Heart rate also drifts upwards at a constant
+workload in the heat, with dehydration, or during long efforts (cardiac drift),
+which the model reads as a higher intensity (see §10).
 
 ## 5. Estimating $RER(t)$: metabolic thresholds
 
 Real RER is not constant: it rises non-linearly with intensity, especially around
 the **metabolic thresholds** ($LT_1$, aerobic threshold; $LT_2$,
-anaerobic/lactate threshold). This general behaviour is documented in:
+anaerobic/lactate threshold). The threshold concepts themselves, and how valid
+each way of defining them is, are reviewed in:
 
 > Faude O, Kindermann W, Meyer T. **Lactate threshold concepts: how valid are they?**
 > *Sports Medicine*. 2009;39(6):469-490.
 
+The way RER rises with intensity has been measured directly. In 61 trained
+cyclists exercising after an overnight fast, mean RER was $0.82$ at rest and rose
+to $0.86$, $0.90$ and $0.98$ at 41%, 63% and 80% of $VO_{2peak}$, with a standard
+deviation of about $0.04$ between individuals at each intensity (Goedecke et al.,
+2000).
+
 $LT_1$ is physiologically defined as the point where blood lactate starts to rise
-above resting level. At this point, a well-trained endurance athlete is still
-burning mostly fat (metabolism remains highly aerobically efficient), not a
-50%/50% mix. The point where the energy contribution is exactly 50% fat / 50% CHO
-is a related but **different** concept, known in the literature as the
+above resting level, usually at roughly 65-73% of $VO_{2max}$ in recreational
+runners and cyclists. The point where the energy contribution is exactly 50% fat /
+50% CHO is a related but **different** concept, known in the literature as the
 **"crossover point"**:
 
 > Brooks GA, Mercier J. **Balance of carbohydrate and lipid utilization during
 > exercise: the "crossover" concept.** *Journal of Applied Physiology*.
 > 1994;76(6):2253-2261.
 
-According to the classic non-protein respiratory quotient table (Lusk 1924;
-updated by Péronnet & Massicotte 1991, already cited in §3), the 50%/50% point
-corresponds to $RER\approx 0.85$, while at $LT_1$ (a little earlier, at lower
-intensity) RER tends to be slightly lower — consistent with fat still
-predominating slightly at that point. $LT_2$, in turn, marks the **maximal lactate
-steady state**: the limit intensity at which the body can still clear lactate at
-the same rate it is being produced; at this point RER is typically between $0.95$
-and $1.00$ (there is still a small residual fat oxidation, typically $6$-$10\%$ of
-energy). Above $LT_2$, RER can exceed $1.00$ (up to $1.05$-$1.10$ in near-maximal
-efforts), due to the buffering effect of blood bicarbonate on accumulated lactic
-acid, which releases additional CO2 through the lungs.
+According to the classic non-protein respiratory quotient table (Lusk 1924,
+updated by Péronnet & Massicotte 1991), the 50%/50% point corresponds to
+$RER\approx 0.85$. For a recreational-to-trained athlete eating a normal diet this
+crossover happens at a fairly low intensity: peak fat oxidation ("Fatmax") occurs
+at around 48% of $VO_{2max}$ on average (Venables et al., 2005; 300 healthy men and
+women), and at $LT_1$ RER is already around $0.90$ — carbohydrate predominates
+well before the first lactate threshold. $LT_2$, in turn, marks the **maximal
+lactate steady state**: the limit intensity at which the body can still clear
+lactate at the same rate it is being produced. Reported RER values at this point
+range from about $0.90$ (steady state at the maximal lactate steady state itself)
+to about $0.99$ (at the second ventilatory threshold in ramp tests), and fat
+oxidation becomes marginal (from about $15\%$ of energy at $RER=0.95$ to
+practically none at $RER=1.00$). Above $LT_2$, RER can exceed $1.00$ (peak values
+around $1.2$ are measured at maximal effort; Edvardsen et al., 2014), but that
+excess is CO2 released by the bicarbonate buffering of lactic acid, not additional
+carbohydrate oxidation — so the model caps RER at $1.00$.
 
 ### 5.1. Interpolation model
 
 Since lactate or gases cannot be measured without laboratory equipment, this curve
 can be **approximated** with a piecewise linear interpolation, based on four HR
-reference points: rest, an **onset** point ($I_{onset}$, §6), $LT_1$, $LT_2$, and
+reference points: an **onset** point ($I_{onset}$, §6), $LT_1$, $LT_2$ and
 $HR_{max}$:
 
 $$
@@ -212,20 +231,25 @@ $$
 
 with the reference values chosen for this model:
 
-| Point | Reference RER | Consistency with the literature (§5) |
+| Point | Reference RER | Evidence (§5) |
 |---|---|---|
-| $R_{basal}$ (rest/very light) | $0.72$ | Below the population average ($\sim 0.80$), but within the range observed in trained endurance athletes ($0.718$-$0.927$) |
-| $R_{LT_1}$ | $0.82$ | Slightly below the most commonly cited range for $LT_1$ ($0.85$-$0.87$); consistent with an endurance profile where fat still predominates at this point (§5) |
-| $R_{LT_2}$ | $0.98$ | Very close to the consensus in the literature ($\approx 1.00$ at $LT_2$) |
-| $R_{max}$ (at $HR_{max}$) | $1.00$ | Conservative ceiling: the model does not represent the real $RER>1.00$ that occurs in near-maximal efforts (§5) |
+| $R_{basal}$ (at and below the onset point; light effort, roughly 50% $VO_{2max}$) | $0.86$ | Fasted trained cyclists: $0.82$ at rest and $0.86$ at 41% $VO_{2peak}$ (Goedecke et al., 2000); eating raises RER at low intensity (Bergman & Brooks, 1999; Achten & Jeukendrup, 2003). Plausible range $0.82$-$0.90$ |
+| $R_{LT_1}$ | $0.91$ | $\approx 0.90$ at 63% $VO_{2peak}$ even when fasted (Goedecke et al., 2000); $\approx 0.90$-$0.93$ at the first ventilatory threshold in fed amateur cyclists (estimated from the substrate oxidation rates reported by Martínez-Noguera et al., 2020). Plausible range $0.88$-$0.94$ |
+| $R_{LT_2}$ | $0.98$ | $0.976$ at 80% $VO_{2peak}$ (Goedecke et al., 2000); $\approx 0.99$ at the second ventilatory threshold but $0.90$ at the maximal lactate steady state itself in amateur cyclists (Peinado et al., 2016). Plausible range $0.93$-$1.00$ |
+| $R_{max}$ (at $HR_{max}$) | $1.00$ | Ceiling: the measured $RER>1.00$ near maximal effort is bicarbonate-derived CO2, not substrate oxidation, and the equations of §3 are only valid for $RER\le 1$ (§10.3) |
+
+These values describe the typical first 30-60 minutes of a steady effort in the
+profile defined in §10.1. The resulting curve rises slowly below $LT_1$ and faster
+above it, which is the shape measured in trained athletes. The flat value below
+the onset point is a simplification: real RER keeps creeping up with intensity
+there too (fasted resting RER is about $0.80$-$0.82$, fed resting and light-exercise
+RER about $0.85$-$0.90$).
 
 **Model limitations**: this interpolation assumes that $RER(t)$ responds
-instantaneously to HR. Physiologically, at the onset of exercise, fat
-mobilization and oxidation take a few minutes to fully activate (typically
-$10$-$20$ min), so real RER rises a bit faster at the start than this purely
-HR-based model predicts. This delay is shortened if the athlete has done a
-warm-up or recent prior physical activity, since fatty-acid mobilization and blood
-flow to adipose tissue are already partially activated:
+instantaneously to HR and stays the same for the whole effort. In reality, fat
+mobilization takes a few minutes to activate at the start of exercise, and RER
+tends to fall as the effort goes on (§10.2). Prior exercise has been shown to raise
+fat oxidation more than an overnight fast did in elite endurance athletes:
 
 > Andersson Hall U, Edin F, Pedersen A, Madsen K. **Whole-body fat oxidation
 > increases more by prior exercise than overnight fasting in elite endurance
@@ -245,13 +269,24 @@ information is available in each specific case).
 
 **Special case — $LT_1$ as a fraction of $LT_2$**: when $LT_1$ is not known
 directly but (an estimate of) $LT_2$ is, it is common to approximate it as a
-fraction of $LT_2$, since $LT_1$ tends to sit below $LT_2$ (§5). This fraction
-depends on training level: in the general population the two thresholds tend to
-sit further apart, while in an endurance athlete with a good aerobic base they
-are closer together. This model assumes the latter profile (consistent with the
-RER reference values chosen in §5.1):
+fraction of $LT_2$. Group studies that measured the heart rate at both thresholds
+give ratios of about $0.88$-$0.91$:
 
-$$LT_1 \approx 0.85 \cdot LT_2$$
+| Study | Population | Method | $LT_1 / LT_2$ (heart rate) |
+|---|---|---|---|
+| Nuuttila et al. (2025) | 165 recreational runners | blood lactate | $\approx 0.89$ ($80.7\pm4.9\%$ vs $90.6\pm2.5\%$ of $HR_{max}$) |
+| Esteve-Lanao et al. (2026) | 1,411 runners | ventilatory thresholds | $\approx 0.91$ |
+| Lucía et al. (2000) | elite cyclists | ventilatory thresholds | $\approx 0.88$-$0.90$ |
+
+The model therefore uses:
+
+$$LT_1 \approx 0.89 \cdot LT_2$$
+
+Individual variation around this ratio is large (a standard deviation of about 5%
+of $HR_{max}$, roughly 9 bpm), and it showed only weak relationships with fitness
+level, so a fixed fraction is a population estimate: a measured $LT_1$ is always
+better when available. In the same study, fixed-%HR anchors estimated $LT_1$ with a
+mean absolute error of roughly 5-7 bpm (Nuuttila et al., 2025).
 
 **Special case — $I_{onset}$ (onset of exercise)**: this point differs from the
 other three because **it cannot be measured directly, not even with a laboratory
@@ -273,8 +308,8 @@ measurement.
 ## 7. Complete point-in-time model
 
 Putting §3-6 together: given HR at an instant $t$ and the personal parameters
-(weight, resting HR, max HR, $LT_2$, $VO_{2max}$), the model calculates, in this
-order:
+(weight, resting HR, max HR, $LT_2$, $VO_{2max}$ and, optionally, a measured
+$LT_1$), the model calculates, in this order:
 
 $$\%HRR(t) \;\xrightarrow{\text{§4.1}}\; VO_2(t) \;\xrightarrow{\text{§4.2-4.3}}\; \Big(VO_2(t),\ RER(t)\Big) \;\xrightarrow{\text{§3.1}}\; CHO(t),\ FAT(t)$$
 
@@ -329,8 +364,8 @@ integration error, which grows with the size of the gap.
 ### 8.3. Instantaneous rate vs. smoothed rate
 
 The cumulative total (§8.2) is, by definition, an exact sum with no smoothing —
-it gives the best possible estimate of how many grams have been oxidized in
-total. But as a **point-in-time reference value** for decisions during the effort
+it is the plain sum of the point estimates, so it carries all the uncertainty of
+the model (§10). But as a **point-in-time reference value** for decisions during the effort
 (e.g., fueling), instantaneous $CHO(t)$ and the cumulative total give two very
 different kinds of information:
 
@@ -384,7 +419,61 @@ This source broadly establishes:
   **multiple-transportable carbohydrates** are used (glucose + fructose blends),
   since a single carbohydrate source cannot be absorbed at such a high rate.
 
-## 10. Reference summary table
+These are **intake** guidelines, not oxidation targets: during moderate-to-hard
+exercise the rate of carbohydrate oxidation normally exceeds what can be ingested
+and absorbed, and the difference is covered by muscle and liver glycogen.
+Comparing the estimated oxidation rate with these intake limits (about 60 g/h with
+a single carbohydrate source, up to about 90 g/h with multiple-transportable
+carbohydrates) is a rough way of seeing how much of the effort is being drawn from
+the body's glycogen stores — a guide, not a prescription.
+
+## 10. Assumptions, scope and accuracy
+
+### 10.1. Who the model is calibrated for
+
+The reference RER values (§5.1) and the $LT_1/LT_2$ ratio (§6) describe a **typical
+recreational-to-trained endurance athlete** (running or cycling, $VO_{2max}$
+roughly 45-60 ml·kg⁻¹·min⁻¹) who:
+
+- eats a **normal mixed diet** (about 50-55% of energy from carbohydrate);
+- exercises in a **fed state** (not after an overnight fast or a long gap since the
+  last meal) and without carbohydrate loading;
+- is doing **steady-state exercise** at a moderate temperature;
+- and is in the **first hour or so** of the effort.
+
+### 10.2. What moves the real RER away from the model
+
+| Factor | Effect on real RER | Effect on the estimate |
+|---|---|---|
+| Fasted, low-carbohydrate, ketogenic or fat-adapted | Lower (fasting lowers RER at light-to-moderate intensity; Bergman & Brooks, 1999; Achten & Jeukendrup, 2003) | CHO overestimated, FAT underestimated |
+| Large high-carbohydrate meal shortly before | Higher | CHO slightly underestimated |
+| Carbohydrate ingested during the effort | Higher | CHO slightly underestimated (the model does not know about intake) |
+| Elite or very well trained athletes | Lower at the same relative intensity (about $0.88$ vs $0.95$ in well-trained vs recreational runners during 4-min bouts at roughly 89% $VO_{2max}$; Hetlelid et al., 2015) | CHO overestimated |
+| Untrained people | Higher; the HR-$VO_2$ relationship and the thresholds are also less reliable | CHO underestimated, with larger error |
+| Women | Lower on average (about $0.03$; Rothschild et al., 2022; Venables et al., 2005) | CHO slightly overestimated |
+| Duration of the effort | RER tends to fall as glycogen is depleted (roughly $0.0004$-$0.0006$ per minute; Rothschild et al., 2022) | CHO increasingly overestimated in the second hour and beyond |
+| Heat, dehydration, cardiac drift | HR rises at constant workload, while real RER tends to fall | VO2 and CHO overestimated |
+| Running vs cycling | Fat oxidation is reported to be higher in running (Achten et al., 2003); most reference data come from cycling | CHO somewhat overestimated when running |
+
+### 10.3. Intensity range
+
+The equations of §3 were derived for moderate exercise (roughly 50-75% of
+$VO_{2max}$) with $RER<1$; outside that range they are an extrapolation. Above
+$LT_2$ the model only counts **oxidative** carbohydrate use: anaerobic glycolysis
+also draws on glycogen but does not appear in gas-exchange-based oxidation, so total
+glycogen use in hard intervals is underestimated.
+
+### 10.4. Accuracy
+
+The individual spread of RER at a given relative intensity (standard deviation about
+$0.04$; Goedecke et al., 2000) translates, for a reference athlete (70 kg,
+$VO_{2max}$ 50) at 140 bpm, into roughly $\pm 24$ g/h of CHO (about $\pm 20\%$).
+On top of that comes the error of the $VO_2$ estimate (§4.3), which depends on how
+good the inputs ($HR_{max}$, $HR_{rest}$, $VO_{2max}$, $LT_2$) are. Treat the result as
+a **useful indication of the order of magnitude and of trends within a session**,
+not as a measurement.
+
+## 11. Reference summary table
 
 | Ref. | Use in the model | Citation |
 |---|---|---|
@@ -398,3 +487,17 @@ This source broadly establishes:
 | Jeukendrup (2014) | CHO intake guidelines during exercise (fueling) | *Sports Med* 44(Suppl 1):S25-S33 |
 | Hunter (1986) | Exponential moving average (EMA) as a smoothing technique | *J Quality Technology* 18(4):203-210 |
 | Andersson Hall et al. (2016) | Warm-up/prior exercise shortens the fat-mobilization delay | *Appl Physiol Nutr Metab* 41(4):430-437 |
+| Péronnet & Massicotte (1991) | Table of non-protein respiratory quotient (50/50 split at $RER\approx 0.85$) | *Can J Sport Sci* 16(1):23-29 |
+| Goedecke et al. (2000) | Measured RER at rest and at 41-80% $VO_{2peak}$ in trained cyclists; between-individual variability | *Am J Physiol Endocrinol Metab* 279(6):E1325-E1334 |
+| Venables, Achten & Jeukendrup (2005) | Peak fat oxidation at about 48% $VO_{2max}$ in 300 men and women | *J Appl Physiol* 98(1):160-167 |
+| Bergman & Brooks (1999) | RER in fed vs fasted trained and untrained men | *J Appl Physiol* 86(2):479-487 |
+| Achten & Jeukendrup (2003) | Pre-exercise carbohydrate shifts substrate use towards carbohydrate | *J Sports Sci* 21(12):1017-1024 |
+| Achten, Venables & Jeukendrup (2003) | Fat oxidation is higher in running than in cycling | *Metabolism* 52(6):747-752 |
+| Martínez-Noguera et al. (2020) | Substrate oxidation rates at ventilatory thresholds in amateur cyclists (data from a supplementation study) | *Nutrients* 12(12):3911 |
+| Peinado et al. (2016) | $VCO_2/VO_2$ at the ventilatory thresholds and at the maximal lactate steady state in amateur cyclists | *Biol Sport* 33(4):373-380 |
+| Hetlelid et al. (2015) | RER in recreationally trained vs well-trained runners | *BMJ Open Sport Exerc Med* 1(1):e000047 |
+| Rothschild et al. (2022) | Modelling analysis of diet, duration, sex and other factors on substrate oxidation in cycling | *Sports Med* 52(11):2775-2795 |
+| Edvardsen, Hem & Anderssen (2014) | Peak RER values at maximal effort | *PLoS One* 9(1):e85276 |
+| Nuuttila et al. (2025) | $LT_1$ and $LT_2$ as %$HR_{max}$ and accuracy of fixed-%HR anchors in recreational runners | *Eur J Appl Physiol* 125(8):2161-2171 |
+| Esteve-Lanao et al. (2026) | Heart rate at the ventilatory thresholds in 1,411 runners | *Sports (Basel)* 14(1):29 |
+| Lucía et al. (2000) | Heart rate at the ventilatory thresholds in elite cyclists | *Med Sci Sports Exerc* 32(10):1777-1782 |
