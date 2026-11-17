@@ -52,10 +52,11 @@ Per fer-ho bé:
   seria un únic factor suau, no un model nou.
 - **Sense ajust per sexe** (les dones tenen un RER ~0,03 més baix de mitjana): descartat,
   la dispersió individual és més gran que l'efecte.
-- **Script de Python d'escriptori:** cal posar-hi les mateixes constants que l'app
-  (`RER_BASAL=0.86`, `RER_LT1=0.91`, `RER_LT2=0.98`, `RER_MAX=1.00`, `PCT_LT1=0.89`) i la
-  mateixa escala de colors del CHO (verd <60 g/h, taronja 60-90, vermell >=90, després dels
-  45 min). Si no, els resultats d'app i script divergeixen.
+- **Script de Python d'escriptori** (`tools/analitzador_fit.py`, fet el 17/11/2026): ja té
+  les mateixes constants que l'app 0.5.0 i l'escala de colors del CHO. Si es canvia el model
+  de l'app, cal canviar també l'script. Amb 4 activitats de prova (perfil per defecte) el
+  model dona entre un +4 % i un +24 % més de kcal que Garmin: coincideix a les voltes suaus
+  i se'n separa a les intenses.
 - **Referències no verificades en línia** (la cita coincideix amb la memòria, però no s'han
   pogut obrir): Frayn 1983, Brooks & Mercier 1994, Hunter 1986, Karvonen 1957, i el text
   original de Jeukendrup & Wallis 2005 (el rang de validesa 50-75% VO2max ve de cites

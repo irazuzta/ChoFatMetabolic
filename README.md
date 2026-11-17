@@ -32,7 +32,7 @@ citations, and implementation details are in the
 source/       Monkey C source (the data field itself)
 resources/    Strings, settings, drawables (app icon)
 manifest.xml  Connect IQ app manifest (supported devices, permissions)
-tools/        Build/deploy automation (PowerShell)
+tools/        Build/deploy automation (PowerShell) and a desktop .FIT analyzer (Python)
 docs/         Public documentation site source (English, built with Zensical)
 notes/        Working documents (Catalan) and Connect IQ Store submission notes
 ```
@@ -46,6 +46,10 @@ developer signing key.
 tools\Run-Simulator.ps1        # build + run in the simulator
 tools\Build-Release.ps1        # build the signed .iq package for all devices
 ```
+
+`tools/analitzador_fit.py` is a desktop tool (Catalan UI) that applies the same model to a
+Garmin `.fit` file and plots CHO/fat rates, % of energy by source and model vs Garmin
+calories. Requires `pip install fitparse matplotlib numpy`.
 
 ## License
 
