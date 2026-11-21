@@ -77,4 +77,13 @@ calories. Requires `pip install fitparse matplotlib numpy`.
 
 ## How to cite
 
-See [`CITATION.cff`](CITATION.cff) (GitHub shows a "Cite this repository" button).
+The papers are archived on Zenodo:
+
+- Irazuzta, J. (2026). *Estimating carbohydrate and fat oxidation from heart rate and
+  Garmin's energy estimate* (Version 1.0) [Preprint]. Zenodo.
+  [doi:10.5281/zenodo.24424749](https://doi.org/10.5281/zenodo.24424749)
+- Irazuzta, J. (2026). *Estimating carbohydrate and fat oxidation from heart rate*
+  (Version 0.5.0) [Preprint]. Zenodo.
+  [doi:10.5281/zenodo.24425095](https://doi.org/10.5281/zenodo.24425095)
+
+See also [`CITATION.cff`](CITATION.cff) (GitHub shows a "Cite this repository" button).

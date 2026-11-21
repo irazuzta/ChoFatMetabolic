@@ -16,6 +16,25 @@ date-released: "2026-11-21"
 license: GPL-3.0-only
 repository-code: "https://github.com/irazuzta/ChoFatMetabolic"
 url: "https://irazuzta.github.io/ChoFatMetabolic/"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.24424749
+    description: "Paper: model from version 1.0 (all versions)"
+  - type: doi
+    value: 10.5281/zenodo.24425095
+    description: "Paper: HR-only model, up to version 0.5 (all versions)"
+preferred-citation:
+  type: generic
+  title: "Estimating carbohydrate and fat oxidation from heart rate and Garmin's energy estimate"
+  authors:
+    - family-names: Irazuzta
+      given-names: Jordi
+  year: 2026
+  version: "1.0"
+  publisher:
+    name: Zenodo
+  doi: 10.5281/zenodo.24424749
+  license: CC-BY-4.0
 keywords:
   - substrate oxidation
   - carbohydrate

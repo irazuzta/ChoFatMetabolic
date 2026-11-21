@@ -6,7 +6,8 @@ the oxidation rate of carbohydrate (CHO) and fat (FAT) during exercise from the
 with a respiratory exchange ratio (RER) estimated from heart rate (HR).
 
 > **Papers (PDF).** This page is the web version of the paper
-> [English](paper/model-fc-energia.en.pdf) · [Català](paper/model-fc-energia.ca.pdf).
+> [English](paper/model-fc-energia.en.pdf) · [Català](paper/model-fc-energia.ca.pdf)
+> (DOI: [10.5281/zenodo.24424749](https://doi.org/10.5281/zenodo.24424749)).
 > The previous model, which also estimated the energy from HR alone, is described in
 > [Theoretical basis (HR model)](01-theoretical-basis.md).
 

@@ -46,10 +46,16 @@ is calibrated for, and how to read the numbers, see the [user guide](03-user-gui
 
 ## Papers
 
-| Model | English | Català |
-|---|---|---|
-| Estimating carbohydrate and fat oxidation from heart rate and Garmin's energy estimate (1.0) | [PDF](paper/model-fc-energia.en.pdf) | [PDF](paper/model-fc-energia.ca.pdf) |
-| Estimating carbohydrate and fat oxidation from heart rate (up to 0.5) | [PDF](paper/model-fc.en.pdf) | [PDF](paper/model-fc.ca.pdf) |
+| Model | English | Català | DOI (Zenodo) |
+|---|---|---|---|
+| Estimating carbohydrate and fat oxidation from heart rate and Garmin's energy estimate (1.0) | [PDF](paper/model-fc-energia.en.pdf) | [PDF](paper/model-fc-energia.ca.pdf) | [10.5281/zenodo.24424749](https://doi.org/10.5281/zenodo.24424749) |
+| Estimating carbohydrate and fat oxidation from heart rate (up to 0.5) | [PDF](paper/model-fc.en.pdf) | [PDF](paper/model-fc.ca.pdf) | [10.5281/zenodo.24425095](https://doi.org/10.5281/zenodo.24425095) |
+
+**How to cite**
+
+> Irazuzta, J. (2026). *Estimating carbohydrate and fat oxidation from heart rate and
+> Garmin's energy estimate* (Version 1.0) [Preprint]. Zenodo.
+> <https://doi.org/10.5281/zenodo.24424749>
 
 © 2026 Jordi Irazuzta. The papers and this documentation are licensed under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): you may share and adapt them,

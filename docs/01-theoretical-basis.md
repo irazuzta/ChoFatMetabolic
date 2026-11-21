@@ -9,7 +9,8 @@
     This model is still used in 1.0 in two ways: the RER from HR (§5–6) is the same,
     and the whole model is the **fallback** when Garmin gives no energy.
 
-    Papers (PDF): [English](paper/model-fc.en.pdf) · [Català](paper/model-fc.ca.pdf).
+    Papers (PDF): [English](paper/model-fc.en.pdf) · [Català](paper/model-fc.ca.pdf)
+    (DOI: [10.5281/zenodo.24425095](https://doi.org/10.5281/zenodo.24425095)).
 
 This document describes a model for estimating the oxidation rate of carbohydrate
 (CHO) and fat (FAT) during exercise from a single, non-invasively measurable
