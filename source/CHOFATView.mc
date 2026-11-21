@@ -28,10 +28,11 @@ using Toybox.FitContributor;
 // ============================================================================
 // CHOFATView
 //
-// Data Field de Connect IQ que calcula en temps real, segon a segon,
-// l'oxidació de carbohidrats (CHO) i greixos (FAT) a partir de la FC,
-// seguint el mateix model (RER interpolat per zones de FC) que la versió
-// d'escriptori en Python que analitza fitxers .FIT.
+// Versió 1.0: l'energia ve de Garmin (Activity.Info.calories) i es
+// reparteix entre carbohidrats (CHO) i greixos (FAT) amb el RER estimat per
+// trams de FC (Jeukendrup & Wallis, 4,1 / 9,3 kcal/g). Si Garmin no dona
+// energia, reserva automàtica: el model només de FC de la versió 0.5.
+// Teoria: docs/04-theoretical-basis-garmin-energy.md (i 01 per a la reserva).
 //
 // Totes les dades es mostren en UNA SOLA pantalla de Data Field, en 3
 // franges horitzontals iguals:
@@ -99,6 +100,21 @@ class CHOFATView extends WatchUi.DataField {
     // en comptes d'extrapolar la taxa instantània sobre tot el forat.
     const DT_MAX_MS = 5000;
 
+    // --- 0.6: energia de Garmin (Info.calories) ---
+    const KCAL_G_CHO = 4.1;          // kcal per gram (coherent amb J&W)
+    const KCAL_G_FAT = 9.3;
+    const CAL_STALL_MS = 120000;     // Info.calories sense pujar aquest temps -> reserva
+    const EMA_INIT_MS = 60000;       // temps actiu abans d'arrencar l'EMA (fins llavors, mitjana real)
+
+    hidden var kcalPrev as Lang.Number? = null;     // últim Info.calories processat (base)
+    hidden var enReserva as Lang.Boolean = true;    // true: energia del model 0.5.0
+    hidden var msUltimIncrement as Lang.Number = 0; // timerTime de l'últim increment o de la base
+    hidden var intMs as Lang.Number = 0;            // temps de cronòmetre de l'interval en curs
+    hidden var intRerMin as Lang.Float = 0.0;       // suma RER*dtMin dels ticks amb FC vàlida
+    hidden var intMinFc as Lang.Float = 0.0;        // suma dtMin amb FC vàlida
+    hidden var rerUltim as Lang.Float = -1.0;       // últim RER vàlid; < 0 = encara cap FC
+
+
     // --- Geometria de les 3 files, calculada un sol cop (namés es recalcula
     //     si canvia la mida de pantalla, cosa que no passa durant una
     //     activitat) per no repetir aquests càlculs a cada onUpdate(). ---
@@ -147,10 +163,14 @@ class CHOFATView extends WatchUi.DataField {
     hidden var fitFatTotal as FitContributor.Field?;
     hidden var fitChoAvg as FitContributor.Field?;
 
-    function initialize() {
+    // ambFit = false només als tests unitaris (createField no funciona fora
+    // d'una activitat i llança un error que no es pot capturar).
+    function initialize(ambFit as Lang.Boolean) {
         DataField.initialize();
         carregarPerfil();
-        crearCampsFit();
+        if (ambFit) {
+            crearCampsFit();
+        }
     }
 
     // Escriu un valor en un camp FIT, tolerant que el camp no s'hagi pogut
@@ -330,6 +350,11 @@ class CHOFATView extends WatchUi.DataField {
         tempsActiuMs = 0;
         minutsTranscorreguts = 0.0;
         carregarPerfil();
+        kcalPrev = null;
+        enReserva = true;
+        msUltimIncrement = 0;
+        rerUltim = -1.0;
+        reiniciaInterval();
         desaFit(fitChoAcum, 0.0);
         desaFit(fitFatAcum, 0.0);
         desaFit(fitChoRate, 0.0);
@@ -339,18 +364,61 @@ class CHOFATView extends WatchUi.DataField {
     }
 
     // ------------------------------------------------------------------
-    // Es crida aproximadament un cop per segon amb les dades d'activitat
-    // actuals. Aquí acumulem grams de CHO/FAT i calculem taxes instantànies.
+    // RER interpolat per trams de FC (mateix model que la 0.5.0).
+    // ------------------------------------------------------------------
+    hidden function rerPerFc(fc as Lang.Float) as Lang.Float {
+        var lt1Bpm = (lt1Fixat > 0) ? lt1Fixat.toFloat() : PCT_LT1 * lt2;
+        var punt = PCT_ACTIVACIO_CHO * lt2;
+        if (fc <= punt) {
+            return RER_BASAL;
+        }
+        if (fc <= lt1Bpm) {
+            return RER_BASAL + (fc - punt) / (lt1Bpm - punt) * (RER_LT1 - RER_BASAL);
+        }
+        if (fc <= lt2) {
+            return RER_LT1 + (fc - lt1Bpm) / (lt2 - lt1Bpm).toFloat() * (RER_LT2 - RER_LT1);
+        }
+        var denom = (fcMax - lt2).toFloat();
+        var ratio3 = denom > 0.0 ? (fc - lt2) / denom : 1.0;
+        if (ratio3 > 1.0) { ratio3 = 1.0; }
+        return RER_LT2 + ratio3 * (RER_MAX - RER_LT2);
+    }
+
+    // Model 0.5: %HRR -> VO2 (L/min). Només per a la reserva.
+    hidden function vo2FcLMin(fc as Lang.Float) as Lang.Float {
+        var hrr = (fc - fcRepos) / (fcMax - fcRepos).toFloat();
+        if (hrr < 0.0) { hrr = 0.0; }
+        if (hrr > 1.0) { hrr = 1.0; }
+        return (3.5 + hrr * (vo2max - 3.5)) * pesKg / 1000.0;
+    }
+
+    hidden function reiniciaInterval() as Void {
+        intMs = 0;
+        intRerMin = 0.0;
+        intMinFc = 0.0;
+    }
+
+    // ------------------------------------------------------------------
+    // Es crida aproximadament un cop per segon. Només llegeix Activity.Info
+    // i delega a processa(), que té tota la lògica.
     // ------------------------------------------------------------------
     function compute(info as Activity.Info) as Void {
-        if (info.timerTime == null || info.currentHeartRate == null) {
+        if (info.timerTime == null) {
             return;
         }
+        processa(info.timerTime as Lang.Number, info.calories, info.currentHeartRate);
+    }
 
-        var timerTimeMs = info.timerTime as Lang.Number;
-
+    // ------------------------------------------------------------------
+    // 0.6: l'energia ve de les kcal de Garmin (Info.calories, acumulat).
+    // Cada increment de kcal es converteix en litres d'O2 amb el RER mitjà
+    // de l'interval (equivalent energètic coherent amb 4,1 / 9,3 kcal/g) i
+    // es reparteix en grams amb Jeukendrup & Wallis. Si Garmin no dona
+    // calories (null o encallat > CAL_STALL_MS), reserva = model 0.5.0.
+    // ------------------------------------------------------------------
+    function processa(timerTimeMs as Lang.Number, kc as Lang.Number?, fcObj as Lang.Number?) as Void {
+        // Primera crida: només referència de temps.
         if (!hasStarted) {
-            // Primera mostra: només guardem la referència de temps.
             lastTimerTimeMs = timerTimeMs;
             hasStarted = true;
             return;
@@ -359,108 +427,148 @@ class CHOFATView extends WatchUi.DataField {
         var dtMs = timerTimeMs - lastTimerTimeMs;
         lastTimerTimeMs = timerTimeMs;
 
-        // timerTime no avança mentre l'activitat està en pausa, així que
-        // aquest control també evita acumular durant les pauses.
+        // Pausa (o abans d'engegar): timerTime no avança. No s'acumula res;
+        // l'energia que Garmin pugui comptar en pausa no es reparteix: només
+        // es mou la base.
         if (dtMs <= 0) {
+            if (kc != null && kcalPrev != null && !enReserva) {
+                var dPausa = (kc as Lang.Number) - (kcalPrev as Lang.Number);
+                if (dPausa > 0) {
+                    kcalPrev = kc;
+                    reiniciaInterval();
+                }
+            }
             return;
         }
-
-        // Tall de sensor de FC massa llarg (p.ex. òptic de canell que perd
-        // el senyal uns segons): no extrapolem la taxa actual sobre tot el
-        // forat, simplement descartem aquesta mostra i esperem la següent.
-        if (dtMs > DT_MAX_MS) {
-            return;
-        }
-
-        tempsActiuMs += dtMs;
-        var dtMin = dtMs / 60000.0;
-        var fcActual = (info.currentHeartRate as Lang.Number).toFloat();
 
         minutsTranscorreguts = timerTimeMs / 60000.0;
+        var dtMin = dtMs / 60000.0;
 
-        // --- Zona de FC actual (per a l'indicador petit Z1..Z5) ---
-        if (zonesFC.size() >= 6) {
-            if (fcActual <= (zonesFC[1] as Lang.Number).toFloat()) {
-                zonaFCActual = 1;
-            } else if (fcActual <= (zonesFC[2] as Lang.Number).toFloat()) {
-                zonaFCActual = 2;
-            } else if (fcActual <= (zonesFC[3] as Lang.Number).toFloat()) {
-                zonaFCActual = 3;
-            } else if (fcActual <= (zonesFC[4] as Lang.Number).toFloat()) {
-                zonaFCActual = 4;
-            } else {
-                zonaFCActual = 5;
+        // --- FC i RER d'aquest tick (mateix criteri de validesa que la 0.5.0) ---
+        var fcValida = (fcObj != null) && (dtMs <= DT_MAX_MS);
+        var fcActual = 0.0;
+        var rer = 0.0;
+        if (fcValida) {
+            fcActual = (fcObj as Lang.Number).toFloat();
+
+            // Zona de FC actual (per a l'indicador petit Z1..Z5)
+            if (zonesFC.size() >= 6) {
+                if (fcActual <= (zonesFC[1] as Lang.Number).toFloat()) {
+                    zonaFCActual = 1;
+                } else if (fcActual <= (zonesFC[2] as Lang.Number).toFloat()) {
+                    zonaFCActual = 2;
+                } else if (fcActual <= (zonesFC[3] as Lang.Number).toFloat()) {
+                    zonaFCActual = 3;
+                } else if (fcActual <= (zonesFC[4] as Lang.Number).toFloat()) {
+                    zonaFCActual = 4;
+                } else {
+                    zonaFCActual = 5;
+                }
+            }
+
+            rer = rerPerFc(fcActual);
+            rerUltim = rer;
+        }
+
+        var choTick = 0.0;
+        var fatTick = 0.0;
+        var comptaTemps = false;
+
+        // ---- Font d'energia ----
+        if (kc == null) {
+            // Sense calories de Garmin: reserva. En tornar, el primer valor serà base nova.
+            enReserva = true;
+            kcalPrev = null;
+        } else if (kcalPrev == null || (enReserva && kc != kcalPrev)) {
+            // Base nova: inici, recàrrega del camp, tornada d'un null o primer canvi
+            // després d'un encallament. NO es reparteix el que Garmin ja porta comptat.
+            kcalPrev = kc;
+            enReserva = false;
+            msUltimIncrement = timerTimeMs;
+            reiniciaInterval();
+        } else if (!enReserva) {
+            // Mode Garmin: aquest tick forma part de l'interval que tancarà el proper increment.
+            intMs += dtMs;
+            if (fcValida) {
+                intRerMin += rer * dtMin;
+                intMinFc += dtMin;
+            }
+            comptaTemps = true;
+
+            var kcN = kc as Lang.Number;
+            var prevN = kcalPrev as Lang.Number;
+            if (kcN > prevN) {
+                var rerInt = (intMinFc > 0.0) ? intRerMin / intMinFc : rerUltim;
+                if (rerInt > 0.0) {                       // < 0: encara no hi ha hagut mai FC
+                    var dE = (kcN - prevN).toFloat();
+                    var cL = 4.210 * rerInt - 2.962;
+                    if (cL < 0.0) { cL = 0.0; }
+                    var fL = 1.695 - 1.701 * rerInt;
+                    if (fL < 0.0) { fL = 0.0; }
+                    var litresO2 = dE / (KCAL_G_CHO * cL + KCAL_G_FAT * fL);
+                    choTick = litresO2 * cL;
+                    fatTick = litresO2 * fL;
+                }
+                kcalPrev = kcN;
+                msUltimIncrement = timerTimeMs;
+                reiniciaInterval();
+            } else if (kcN < prevN) {
+                // No hauria de passar: base nova, sense grams negatius.
+                kcalPrev = kcN;
+                msUltimIncrement = timerTimeMs;
+                reiniciaInterval();
+            } else if (timerTimeMs - msUltimIncrement > CAL_STALL_MS) {
+                // Garmin no compta (valor encallat): reserva. kcalPrev es manté per
+                // detectar el primer canvi, que serà base nova.
+                enReserva = true;
+                reiniciaInterval();
             }
         }
 
-        // --- Heart Rate Reserve i VO2 estimat ---
-        var hrr = (fcActual - fcRepos) / (fcMax - fcRepos).toFloat();
-        if (hrr < 0.0) { hrr = 0.0; }
-        if (hrr > 1.0) { hrr = 1.0; }
-
-        var vo2ReposRelatiu = 3.5;
-        var vo2RelatiuActual = vo2ReposRelatiu + hrr * (vo2max - vo2ReposRelatiu);
-        var vo2LMin = (vo2RelatiuActual * pesKg) / 1000.0;
-
-        // --- RER interpolat per zones de FC (mateix model que l'app d'escriptori) ---
-        var lt1Bpm = (lt1Fixat > 0) ? lt1Fixat.toFloat() : PCT_LT1 * lt2;
-        var puntActivacioCho = PCT_ACTIVACIO_CHO * lt2;
-        var rer;
-
-        if (fcActual <= puntActivacioCho) {
-            rer = RER_BASAL;
-        } else if (fcActual <= lt1Bpm) {
-            var ratio = (fcActual - puntActivacioCho) / (lt1Bpm - puntActivacioCho);
-            rer = RER_BASAL + ratio * (RER_LT1 - RER_BASAL);
-        } else if (fcActual <= lt2) {
-            var ratio2 = (fcActual - lt1Bpm) / (lt2 - lt1Bpm).toFloat();
-            rer = RER_LT1 + ratio2 * (RER_LT2 - RER_LT1);
-        } else {
-            var denom = (fcMax - lt2).toFloat();
-            var ratio3 = denom > 0.0 ? (fcActual - lt2) / denom : 1.0;
-            if (ratio3 > 1.0) { ratio3 = 1.0; }
-            rer = RER_LT2 + ratio3 * (RER_MAX - RER_LT2);
+        // ---- Reserva: exactament el càlcul de la 0.5.0 ----
+        if (enReserva) {
+            if (!fcValida) {
+                return;                                   // com la 0.5.0: sense FC no s'acumula
+            }
+            var vo2 = vo2FcLMin(fcActual);
+            var choGMin = vo2 * (4.210 * rer - 2.962);
+            if (choGMin < 0.0) { choGMin = 0.0; }
+            var fatGMin = vo2 * (1.695 - 1.701 * rer);
+            if (fatGMin < 0.0) { fatGMin = 0.0; }
+            choTick = choGMin * dtMin;
+            fatTick = fatGMin * dtMin;
+            comptaTemps = true;
         }
 
-        // --- Oxidació de substrats (g/min): equacions de Jeukendrup & Wallis
-        //     (2005), modificació per a exercici de les de Frayn (1983) ---
-        var choGMin = 4.210 * vo2LMin * rer - 2.962 * vo2LMin;
-        var fatGMin = 1.695 * vo2LMin - 1.701 * vo2LMin * rer;
-        if (choGMin < 0.0) { choGMin = 0.0; }
-        if (fatGMin < 0.0) { fatGMin = 0.0; }
+        if (!comptaTemps) {
+            return;
+        }
 
-        var choIncrement = choGMin * dtMin;
+        // ---- Acumulació, mitjanes i FIT: igual que la 0.5.0 ----
+        tempsActiuMs += dtMs;   // en mode Garmin també compta els forats de FC (la seva energia hi és)
+        totalChoGrams += choTick;
+        totalFatGrams += fatTick;
+        choRateGH = choTick / dtMin * 60.0;   // en mode Garmin: 0 o un pic; només alimenta l'EMA
 
-        // --- Acumulació de la sessió ---
-        totalChoGrams += choIncrement;
-        totalFatGrams += fatGMin * dtMin;
-
-        // --- Valor per mostrar (taxa instantània de CHO) ---
-        choRateGH = choGMin * 60.0;
-
-        // Mitjana sobre el temps realment acumulat (no sobre tot el timer):
-        // així és coherent amb els grams encara que el camp s'hagi reiniciat
-        // a mitja activitat o hi hagi hagut talls del sensor.
         var horesTotals = tempsActiuMs / 3600000.0;
         choAvgGH = horesTotals > 0.0 ? totalChoGrams / horesTotals : 0.0;
 
-        // --- Mitjana mòbil exponencial (EMA) ---
-        // alpha_tick = dtMin / TAU_EMA_MIN és l'aproximació de primer ordre
-        // de 1 - exp(-dtMin/TAU_EMA_MIN), vàlida perquè dtMin sempre és molt
-        // més petit que la constant de temps (els ticks són ~1 s, i ja
-        // descartem forats grans amb DT_MAX_MS). S'adapta sola encara que
-        // l'interval entre mostres no sigui exactament regular.
+        // EMA: durant el primer minut es mostra la mitjana real acumulada
+        // (grams / temps). El primer increment de Garmin tanca un interval
+        // parcial (el camp comença a mirar a mig interval) i arrencar l'EMA
+        // amb aquesta taxa la inflava durant molts minuts. Passat
+        // EMA_INIT_MS, l'EMA arrenca d'aquesta mitjana i segueix normalment.
         if (!emaInicialitzada) {
-            choAvgEmaGH = choRateGH;
-            emaInicialitzada = true;
+            choAvgEmaGH = choAvgGH;
+            if (tempsActiuMs >= EMA_INIT_MS) {
+                emaInicialitzada = true;
+            }
         } else {
             var alphaTick = dtMin / TAU_EMA_MIN;
             if (alphaTick > 1.0) { alphaTick = 1.0; }
             choAvgEmaGH = choAvgEmaGH + alphaTick * (choRateGH - choAvgEmaGH);
         }
 
-        // --- Desa els valors al fitxer .FIT (RECORD + SESSION). Els de
-        //     SESSION s'actualitzen cada segon: s'escriu l'últim valor. ---
         desaFit(fitChoAcum, totalChoGrams);
         desaFit(fitFatAcum, totalFatGrams);
         desaFit(fitChoRate, choAvgEmaGH);
@@ -468,6 +576,25 @@ class CHOFATView extends WatchUi.DataField {
         desaFit(fitFatTotal, totalFatGrams);
         desaFit(fitChoAvg, choAvgGH);
     }
+
+    // ------------------------------------------------------------------
+    // Accessos per als tests unitaris (source/Tests.mc). Amb (:debug) no entren
+    // a la build de release (-r) que es puja a l'Store.
+    // ------------------------------------------------------------------
+    (:debug)
+    function tPerfil() as Void {
+        fcRepos = 38; fcMax = 180; lt2 = 166; pesKg = 66.0; vo2max = 54.0; lt1Fixat = 0;
+    }
+    (:debug)
+    function tRer(fc as Lang.Float) as Lang.Float { return rerPerFc(fc); }
+    (:debug)
+    function tCho() as Lang.Float { return totalChoGrams; }
+    (:debug)
+    function tFat() as Lang.Float { return totalFatGrams; }
+    (:debug)
+    function tReserva() as Lang.Boolean { return enReserva; }
+    (:debug)
+    function tEma() as Lang.Float { return choAvgEmaGH; }
 
     // ------------------------------------------------------------------
     // Codi de colors segons la taxa d'oxidació de CHO (g/h): als primers

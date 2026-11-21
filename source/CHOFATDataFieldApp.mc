@@ -37,6 +37,6 @@ class CHOFATDataFieldApp extends Application.AppBase {
 
     // Retorna la vista inicial: el nostre Data Field
     function getInitialView() as [ WatchUi.Views ] or [ WatchUi.Views, WatchUi.InputDelegates ] {
-        return [ new CHOFATView() ];
+        return [ new CHOFATView(true) ];
     }
 }
