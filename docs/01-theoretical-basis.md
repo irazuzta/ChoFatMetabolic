@@ -1,4 +1,15 @@
-# Estimating carbohydrate and fat oxidation from heart rate: a practical model
+# Estimating carbohydrate and fat oxidation from heart rate
+
+!!! info "Model used up to version 0.5"
+    This page describes the original model, which estimates **everything from heart
+    rate**, including the energy. Since **version 1.0** the energy comes from Garmin
+    and the app only splits it between carbohydrate and fat:
+    [Theoretical basis (HR + Garmin energy)](04-theoretical-basis-garmin-energy.md).
+
+    This model is still used in 1.0 in two ways: the RER from HR (§5–6) is the same,
+    and the whole model is the **fallback** when Garmin gives no energy.
+
+    Papers (PDF): [English](paper/model-fc.en.pdf) · [Català](paper/model-fc.ca.pdf).
 
 This document describes a model for estimating the oxidation rate of carbohydrate
 (CHO) and fat (FAT) during exercise from a single, non-invasively measurable

@@ -1,0 +1,639 @@
+% =====================================================================
+%  Estimació de l'oxidació de carbohidrats i greixos a partir de la
+%  freqüència cardíaca (article, en català; abans base-teorica.tex)
+%  Font: notes/01-base-teorica.md (model de la versió 0.5.0)
+%  Compilar: pdflatex model-fc.ca.tex (dues passades)
+% =====================================================================
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[catalan]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[a4paper,margin=2.4cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{icomma}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepgfplotslibrary{groupplots}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+
+\captionsetup{font=small,labelfont=bf}
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+
+\newcommand{\VO}{\ensuremath{\dot V\mathrm{O_2}}}
+\newcommand{\VCO}{\ensuremath{\dot V\mathrm{CO_2}}}
+\newcommand{\VOmax}{\ensuremath{\dot V\mathrm{O_{2max}}}}
+\newcommand{\RER}{\ensuremath{\mathrm{RER}}}
+\newcommand{\FC}{\ensuremath{\mathrm{FC}}}
+\newcommand{\mlkgmin}{ml\,kg$^{-1}$\,min$^{-1}$}
+
+\title{\textbf{Estimació de l'oxidació de carbohidrats i greixos\\
+a partir de la freqüència cardíaca}}
+\author{Projecte CHO/FAT Metabolic Pro\\
+\small\url{https://irazuzta.github.io/ChoFatMetabolic/}}
+\date{Model de la versió 0.5.0 --- novembre de 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Es presenta un model per estimar en temps real la taxa d'oxidació de carbohidrats
+(CHO) i de greix (FAT) durant l'exercici a partir d'una sola variable mesurable de
+forma no invasiva: la freqüència cardíaca (\FC). El consum d'oxigen (\VO) s'estima
+amb l'equivalència entre la reserva de freqüència cardíaca i la reserva de \VO; el
+quocient d'intercanvi respiratori (\RER) s'aproxima amb una interpolació lineal per
+trams ancorada en quatre punts de \FC\ (sortida del repòs, primer llindar $LT_1$,
+segon llindar $LT_2$ i \FC\ màxima). Les taxes d'oxidació s'obtenen amb les
+equacions de calorimetria indirecta per a exercici de Jeukendrup i Wallis, i el
+total acumulat s'aproxima amb una suma de Riemann. Els valors d'ancoratge del \RER\
+(0,86; 0,91; 0,98; 1,00) i la relació $LT_1\approx0{,}89\,LT_2$ s'han triat a partir
+de mesures publicades en esportistes de fons aficionats-entrenats que fan una dieta
+mixta i s'exerciten havent menjat. Es discuteixen els supòsits del model, els
+factors que en desvien l'estimació en una direcció coneguda (dejú, dietes baixes en
+carbohidrats, nivell d'entrenament, sexe, durada, calor) i la precisió esperable,
+d'uns $\pm20\,\%$ en el CHO per a un individu típic.
+\end{abstract}
+
+\noindent\textbf{Paraules clau:} oxidació de substrats; quocient respiratori;
+freqüència cardíaca; llindar de lactat; calorimetria indirecta; nutrició esportiva.
+
+% ---------------------------------------------------------------------
+\section{Introducció i objectiu}
+% ---------------------------------------------------------------------
+
+La calorimetria indirecta permet saber quina barreja de combustibles s'està oxidant
+a partir de l'intercanvi de gasos respiratoris, però requereix un analitzador de
+gasos de laboratori. L'objectiu d'aquest treball és obtenir una estimació útil
+d'aquesta informació durant l'entrenament real, a partir només de la \FC\ que
+registra un rellotge esportiu.
+
+Volem conèixer, en qualsevol instant $t$ d'una activitat, la taxa d'oxidació de
+carbohidrats i de greix,
+\begin{equation}
+  CHO(t),\; FAT(t) \qquad [\mathrm{g/min}],
+\end{equation}
+i, a partir d'aquestes taxes, el total acumulat fins a la durada $T$:
+\begin{equation}
+  CHO_{total}(T)=\int_0^T CHO(t)\,dt, \qquad
+  FAT_{total}(T)=\int_0^T FAT(t)\,dt .
+  \label{eq:integral}
+\end{equation}
+
+El document s'organitza així: la secció~\ref{sec:conceptes} defineix les variables
+fisiològiques; les seccions~\ref{sec:jw}--\ref{sec:complet} construeixen el model
+puntual ($CHO(t)$, $FAT(t)$); la secció~\ref{sec:integracio} tracta la integració
+temporal; la secció~\ref{sec:fueling} relaciona el resultat amb les guies d'ingesta
+de carbohidrats, i la secció~\ref{sec:suposits} en discuteix l'abast i la precisió.
+
+\paragraph{Abast.} Els valors de referència del model estan triats per a
+\emph{esportistes de fons aficionats-entrenats} (\VOmax\ aproximadament
+45--60~\mlkgmin) que fan una \emph{dieta mixta normal} i s'exerciten \emph{havent
+menjat}, amb un esforç estable. Per a altres perfils (esportistes d'elit o adaptats
+al greix, entrenament en dejú o baix en carbohidrats, persones poc entrenades)
+l'estimació té un biaix en una direcció coneguda (secció~\ref{sec:suposits}).
+
+% ---------------------------------------------------------------------
+\section{Conceptes previs}\label{sec:conceptes}
+% ---------------------------------------------------------------------
+
+\subsection{Consum d'oxigen i producció de CO$_2$}
+\VO\ és el volum d'oxigen consumit per unitat de temps, en L/min (absolut) o en
+\mlkgmin\ (relatiu al pes). \VCO\ és, anàlogament, el volum de CO$_2$ produït.
+Com que oxidar greix o carbohidrat consumeix O$_2$ i produeix CO$_2$ en proporcions
+diferents, mesurar \VO\ i \VCO\ permet deduir quin combustible s'està cremant.
+
+\subsection{Consum màxim d'oxigen}
+\VOmax\ és el valor més alt de \VO\ que una persona pot assolir en un esforç
+màxim, la mesura de referència de la capacitat cardiorespiratòria
+\citep{bassett2000}. En aquest model és l'extrem superior de l'escala de \VO.
+
+\subsection{Quocient d'intercanvi respiratori}
+\begin{equation}
+  \RER(t)=\frac{\VCO(t)}{\VO(t)} .
+\end{equation}
+En repòs i en exercici submàxim pren valors típicament entre $\sim0{,}7$ (oxidació
+gairebé exclusiva de greix) i $\sim1{,}0$ (oxidació gairebé exclusiva de
+carbohidrat). És la variable central del model.
+
+\subsection{Freqüència cardíaca relativa}
+La \FC\ absoluta no és comparable entre persones. El model fa servir la
+\emph{reserva de freqüència cardíaca} (\%HRR), que relativitza la \FC\ respecte al
+rang complet entre repòs i màxim \citep{karvonen1957}:
+\begin{equation}
+  \%HRR=\frac{\FC-\FC_{\mathrm{repòs}}}{\FC_{\mathrm{màx}}-\FC_{\mathrm{repòs}}} .
+\end{equation}
+
+\subsection{Reserva de \VO}
+De manera anàloga, \VO\ es pot expressar respecte al seu propi rang:
+\begin{equation}
+  \%\dot V\mathrm{O_2}R=\frac{\VO-\dot V\mathrm{O_{2,repòs}}}{\VOmax-\dot V\mathrm{O_{2,repòs}}} .
+\end{equation}
+
+% ---------------------------------------------------------------------
+\section{Equacions d'oxidació de substrats}\label{sec:jw}
+% ---------------------------------------------------------------------
+
+Les equacions no proteiques de calorimetria indirecta de \citet{frayn1983}
+relacionen \VO\ i \VCO\ amb els grams de substrat oxidat. Es van derivar per a
+repòs, amb glucosa com a substrat de CHO; durant l'exercici predomina el glicogen,
+i \citet{jeukendrup2005} en van publicar la modificació per a exercici:
+\begin{align}
+  CHO(t) &= 4{,}210\,\VCO(t)-2{,}962\,\VO(t), \label{eq:jw-cho}\\
+  FAT(t) &= 1{,}695\,\VO(t)-1{,}701\,\VCO(t), \label{eq:jw-fat}
+\end{align}
+amb \VO\ i \VCO\ en L/min i el resultat en g/min.
+
+\subsection{Reescriptura en termes de RER}
+Substituint $\VCO(t)=\RER(t)\cdot\VO(t)$:
+\begin{align}
+  CHO(t) &= \VO(t)\,\bigl(4{,}210\,\RER(t)-2{,}962\bigr), \label{eq:cho-rer}\\
+  FAT(t) &= \VO(t)\,\bigl(1{,}695-1{,}701\,\RER(t)\bigr). \label{eq:fat-rer}
+\end{align}
+Calen, doncs, dues estimacions independents: \VO$(t)$ (secció~\ref{sec:vo2}) i
+$\RER(t)$ (seccions~\ref{sec:rer}--\ref{sec:params}).
+
+% ---------------------------------------------------------------------
+\section{Estimació de \VO\ a partir de la freqüència cardíaca}\label{sec:vo2}
+% ---------------------------------------------------------------------
+
+L'estimació es basa en l'equivalència empírica $\%HRR\approx\%\dot V\mathrm{O_2}R$
+\citep{swain1997} (amb la reserva de \VO, no amb el \%\VOmax, que és menys
+precisa):
+\begin{equation}
+  \dot V\mathrm{O_{2,rel}}(t)=\dot V\mathrm{O_{2,repòs}}
+  +\%HRR(t)\,\bigl(\VOmax-\dot V\mathrm{O_{2,repòs}}\bigr),
+\end{equation}
+amb $\dot V\mathrm{O_{2,repòs}}=3{,}5$~\mlkgmin\ (1~MET). El valor absolut és
+\begin{equation}
+  \VO(t)\;[\mathrm{L/min}]=\frac{\dot V\mathrm{O_{2,rel}}(t)\cdot m\;[\mathrm{kg}]}{1000}.
+\end{equation}
+
+\paragraph{Limitacions.} L'equivalència és una aproximació de mitjana
+poblacional. El resultat depèn de la qualitat de $\FC_{\mathrm{repòs}}$, $\FC_{\mathrm{màx}}$ i
+\VOmax, que sovint també són estimacions. A més, la \FC\ puja a càrrega constant
+amb calor, deshidratació o esforços llargs (deriva cardíaca), i el model ho
+interpreta com una intensitat més alta (secció~\ref{sec:suposits}).
+
+% ---------------------------------------------------------------------
+\section{Estimació del RER: llindars metabòlics}\label{sec:rer}
+% ---------------------------------------------------------------------
+
+El \RER\ puja de manera no lineal amb la intensitat, sobretot al voltant dels
+llindars metabòlics: $LT_1$ (llindar aeròbic) i $LT_2$ (llindar anaeròbic o de
+lactat). Els conceptes de llindar i la validesa de cada definició es revisen a
+\citet{faude2009}.
+
+L'evolució del \RER\ amb la intensitat s'ha mesurat directament. En 61 ciclistes
+entrenats que s'exercitaven després d'un dejú nocturn, el \RER\ mitjà va ser 0,82
+en repòs i va pujar a 0,86, 0,90 i 0,98 al 41\,\%, 63\,\% i 80\,\% del
+$\dot V\mathrm{O_{2pic}}$, amb una desviació estàndard d'uns 0,04 entre individus
+a cada intensitat \citep{goedecke2000}.
+
+$LT_1$ es defineix com el punt on el lactat en sang comença a pujar per sobre del
+nivell de repòs, normalment cap al 65--73\,\% del \VOmax\ en corredors i ciclistes
+aficionats. El punt on la contribució energètica és 50\,\% greix i 50\,\% CHO és un
+concepte diferent, el \emph{crossover point} \citep{brooks1994}, que correspon a
+$\RER\approx0{,}85$ segons la taula de quocient respiratori no proteic
+\citep{peronnet1991}. En un esportista aficionat-entrenat amb dieta normal aquest
+creuament es dona a intensitat baixa: l'oxidació màxima de greix (\emph{Fatmax})
+apareix cap al 48\,\% del \VOmax\ de mitjana \citep{venables2005}, i a $LT_1$ el
+\RER\ ja és d'uns 0,90.
+
+$LT_2$ marca el màxim estat estacionari de lactat. Els valors de \RER\ publicats en
+aquest punt van d'uns 0,90 (en estat estacionari al propi màxim estat estacionari)
+a uns 0,99 (al segon llindar ventilatori en proves progressives)
+\citep{peinado2016}, i l'oxidació de greix esdevé marginal. Per sobre de $LT_2$, el
+\RER\ pot superar 1,00 (pics d'uns 1,2 en esforços màxims) \citep{edvardsen2014},
+però aquest excés és CO$_2$ alliberat per l'efecte tampó del bicarbonat, no
+oxidació addicional de carbohidrats. Per això el model limita el \RER\ a 1,00.
+
+\subsection{Model d'interpolació}
+Com que no es pot mesurar lactat ni gasos sense laboratori, la corba s'aproxima amb
+una interpolació lineal per trams entre quatre punts de \FC: la sortida del repòs
+$I_{on}$, $LT_1$, $LT_2$ i $\FC_{\mathrm{màx}}$:
+\begin{equation}
+\RER(t)=
+\begin{cases}
+R_{basal} & \FC\le I_{on},\\[4pt]
+R_{basal}+\dfrac{\FC-I_{on}}{LT_1-I_{on}}\bigl(R_{LT_1}-R_{basal}\bigr) & I_{on}<\FC\le LT_1,\\[10pt]
+R_{LT_1}+\dfrac{\FC-LT_1}{LT_2-LT_1}\bigl(R_{LT_2}-R_{LT_1}\bigr) & LT_1<\FC\le LT_2,\\[10pt]
+R_{LT_2}+\dfrac{\FC-LT_2}{\FC_{\mathrm{màx}}-LT_2}\bigl(R_{max}-R_{LT_2}\bigr) & LT_2<\FC\le\FC_{\mathrm{màx}}.
+\end{cases}
+\label{eq:rer}
+\end{equation}
+
+Els valors de referència i l'evidència que els justifica es recullen a la
+taula~\ref{tab:rer}.
+
+\begin{table}[htbp]
+\centering
+\caption{Valors d'ancoratge del RER del model i evidència publicada.}
+\label{tab:rer}
+\small
+\begin{tabularx}{\textwidth}{@{}l c L@{}}
+\toprule
+Punt & RER & Evidència \\
+\midrule
+$R_{basal}$ (fins a $I_{on}$; esforç suau) & 0,86 &
+Ciclistes entrenats en dejú: 0,82 en repòs i 0,86 al 41\,\% del
+$\dot V\mathrm{O_{2pic}}$ \citep{goedecke2000}; menjar fa pujar el RER a baixa
+intensitat \citep{bergman1999,achten2003cho}. Rang plausible 0,82--0,90. \\
+$R_{LT_1}$ & 0,91 &
+$\approx0{,}90$ al 63\,\% del $\dot V\mathrm{O_{2pic}}$ fins i tot en dejú
+\citep{goedecke2000}; $\approx0{,}90$--0,93 al primer llindar ventilatori en
+ciclistes aficionats que han menjat, estimat a partir de les taxes d'oxidació
+publicades \citep{martineznoguera2020}. Rang plausible 0,88--0,94. \\
+$R_{LT_2}$ & 0,98 &
+0,976 al 80\,\% del $\dot V\mathrm{O_{2pic}}$ \citep{goedecke2000};
+$\approx0{,}99$ al segon llindar ventilatori, però 0,90 al màxim estat estacionari
+de lactat \citep{peinado2016}. Rang plausible 0,93--1,00. \\
+$R_{max}$ (a $\FC_{\mathrm{màx}}$) & 1,00 &
+Sostre: el $\RER>1$ en esforços gairebé màxims és CO$_2$ del bicarbonat
+\citep{edvardsen2014}, i les equacions~\eqref{eq:jw-cho}--\eqref{eq:jw-fat} només
+són vàlides per a $\RER\le1$. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Aquests valors descriuen els primers 30--60 minuts típics d'un esforç estable en el
+perfil definit a la secció~\ref{sec:suposits}. La corba resultant puja lentament per
+sota de $LT_1$ i més ràpid per sobre, que és la forma mesurada en atletes entrenats.
+El tram pla per sota de $I_{on}$ és una simplificació: el \RER\ real també va pujant
+amb la intensitat en aquest tram.
+
+\paragraph{Limitacions.} La interpolació assumeix que el \RER\ respon
+instantàniament a la \FC\ i no canvia al llarg de l'esforç. En realitat, la
+mobilització de greix triga uns minuts a activar-se a l'inici, i el \RER\ tendeix a
+baixar a mesura que avança l'esforç. L'exercici previ augmenta l'oxidació de greix
+més que un dejú nocturn \citep{anderssonhall2016}.
+
+% ---------------------------------------------------------------------
+\section{Estimació dels paràmetres}\label{sec:params}
+% ---------------------------------------------------------------------
+
+El model necessita quatre punts de \FC\ ($I_{on}$, $LT_1$, $LT_2$, $\FC_{\mathrm{màx}}$) i el
+\VOmax. Si l'esportista s'ha fet proves de laboratori, s'utilitzen els valors
+mesurats. Si no, cal estimar-los de manera indirecta.
+
+\subsection{$LT_1$ com a fracció de $LT_2$}
+Quan no es coneix $LT_1$ però sí (una estimació de) $LT_2$, és habitual aproximar
+el primer com una fracció del segon. Els estudis de grup que han mesurat la \FC\ en
+tots dos llindars donen proporcions d'uns 0,88--0,91 (taula~\ref{tab:lt1}).
+
+\begin{table}[htbp]
+\centering
+\caption{Relació entre la \FC\ al primer i al segon llindar en estudis de grup.}
+\label{tab:lt1}
+\small
+\begin{tabularx}{\textwidth}{@{}l L l l@{}}
+\toprule
+Estudi & Població & Mètode & $LT_1/LT_2$ \\
+\midrule
+\citet{nuuttila2025} & 165 corredors aficionats & lactat en sang &
+$\approx0{,}89$ \\
+\citet{estevelanao2026} & 1.411 corredors & llindars ventilatoris & $\approx0{,}91$ \\
+\citet{lucia2000} & ciclistes d'elit & llindars ventilatoris & $\approx0{,}88$--0,90 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent A \citet{nuuttila2025}, $LT_1$ i $LT_2$ es van situar al
+$80{,}7\pm4{,}9\,\%$ i al $90{,}6\pm2{,}5\,\%$ de la $\FC_{\mathrm{màx}}$. Per això el model
+fa servir
+\begin{equation}
+  LT_1\approx0{,}89\,LT_2 .
+\end{equation}
+La variació individual al voltant d'aquesta proporció és gran (desviació estàndard
+d'un 5\,\% de la $\FC_{\mathrm{màx}}$, uns 9~ppm) i només mostra relacions febles amb el
+nivell de forma; els ancoratges fixos en \%\FC\ van estimar $LT_1$ amb un error
+absolut mitjà d'uns 5--7~ppm \citep{nuuttila2025}. Un $LT_1$ mesurat és sempre
+preferible.
+
+\subsection{Sortida del repòs, $I_{on}$}
+Aquest punt no correspon a cap esdeveniment fisiològic discret i no es pot mesurar
+ni amb una prova de laboratori: és un recurs de suavitzat perquè la transició del
+\RER\ sigui gradual en comptes d'un canvi brusc de pendent a $LT_1$. Es fa servir
+\begin{equation}
+  I_{on}\approx0{,}70\,LT_2 ,
+\end{equation}
+on el 0,70 és una tria de disseny, no el resultat d'una mesura.
+
+% ---------------------------------------------------------------------
+\section{Model puntual complet}\label{sec:complet}
+% ---------------------------------------------------------------------
+
+Donada la \FC\ en un instant $t$ i els paràmetres personals (pes, $\FC_{\mathrm{repòs}}$,
+$\FC_{\mathrm{màx}}$, $LT_2$, \VOmax\ i, opcionalment, un $LT_1$ mesurat), el model calcula
+\begin{gather}
+  \FC(t)\;\longrightarrow\;\%HRR(t)\;\longrightarrow\;\VO(t),
+  \qquad \FC(t)\;\xrightarrow{\eqref{eq:rer}}\;\RER(t),\notag\\
+  \bigl(\VO(t),\,\RER(t)\bigr)\;\xrightarrow{\eqref{eq:cho-rer},\,\eqref{eq:fat-rer}}\;CHO(t),\;FAT(t).
+\end{gather}
+És un model \emph{puntual}: respon sempre la mateixa pregunta (a quin ritme
+s'oxidaria CHO i FAT si la \FC\ es mantingués en aquest valor), en g/min, amb
+independència de la freqüència a la qual s'avaluï.
+
+La figura~\ref{fig:model} mostra el resultat per a un esportista de referència
+(70~kg, \VOmax\ 50~\mlkgmin, $\FC_{\mathrm{repòs}}=55$, $\FC_{\mathrm{màx}}=185$, $LT_2=165$~ppm, i
+per tant $LT_1\approx147$ i $I_{on}\approx116$~ppm).
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[
+  group style={group size=2 by 1, horizontal sep=1.8cm},
+  width=0.46\textwidth, height=5.4cm,
+  xmin=90, xmax=185, xlabel={\FC\ (ppm)},
+  grid=major, grid style={gray!25},
+  tick label style={font=\small}, label style={font=\small},
+  /pgf/number format/use comma,
+]
+\nextgroupplot[ylabel={RER}, ymin=0.84, ymax=1.01,
+  yticklabel style={/pgf/number format/fixed,/pgf/number format/precision=2}]
+\addplot[thick, black] coordinates {
+ (90,0.8600) (115.5,0.8600) (146.85,0.9100) (165,0.9800) (185,1.0000)};
+\addplot[only marks, mark=*, mark size=1.6pt, black] coordinates {
+ (115.5,0.86) (146.85,0.91) (165,0.98) (185,1.00)};
+\node[font=\scriptsize, anchor=south east] at (axis cs:115,0.862) {$I_{on}$};
+\node[font=\scriptsize, anchor=north west] at (axis cs:147.5,0.905) {$LT_1$};
+\node[font=\scriptsize, anchor=north west] at (axis cs:165.5,0.975) {$LT_2$};
+\nextgroupplot[ylabel={Taxa d'oxidació (g/h)}, ymin=0, ymax=270,
+  legend style={font=\scriptsize, at={(0.03,0.97)}, anchor=north west, draw=none, fill=white, fill opacity=0.8}]
+\addplot[thick, black] coordinates {
+ (90,44.3) (100,54.2) (110,64.1) (115.5,69.5) (120,77.4) (125,86.6) (130,96.3)
+ (135,106.5) (140,117.2) (146.85,132.7) (150,144.9) (155,165.2) (160,186.7)
+ (165,209.4) (170,222.1) (175,235.1) (180,248.4) (185,262.1)};
+\addlegendentry{CHO}
+\addplot[thick, dashed, black] coordinates {
+ (90,15.6) (100,19.1) (110,22.6) (115.5,24.5) (120,24.7) (125,24.7) (130,24.6)
+ (135,24.2) (140,23.6) (146.85,22.5) (150,19.9) (155,15.4) (160,10.5)
+ (165,5.0) (170,3.7) (175,2.1) (180,0.5) (185,0.0)};
+\addlegendentry{FAT}
+\end{groupplot}
+\end{tikzpicture}
+\caption{Model per a l'esportista de referència. Esquerra: \RER\ interpolat per
+trams~\eqref{eq:rer}. Dreta: taxes d'oxidació de CHO i FAT resultants
+\eqref{eq:cho-rer}--\eqref{eq:fat-rer}, en g/h.}
+\label{fig:model}
+\end{figure}
+
+% ---------------------------------------------------------------------
+\section{De la taxa instantània a l'acumulat}\label{sec:integracio}
+% ---------------------------------------------------------------------
+
+\subsection{Discretització}
+La integral~\eqref{eq:integral} no té solució analítica perquè $\FC(t)$ és una
+funció arbitrària. Amb mostres discretes $t_0=0,t_1,\dots,t_n$, l'aproximació més
+senzilla és la suma de Riemann:
+\begin{equation}
+  CHO_{total}(t_n)\approx\sum_{i=1}^{n}CHO(t_i)\,\Delta t_i, \qquad
+  FAT_{total}(t_n)\approx\sum_{i=1}^{n}FAT(t_i)\,\Delta t_i,
+\end{equation}
+amb $\Delta t_i=t_i-t_{i-1}$ en minuts. És una integració de primer ordre, vàlida
+quan $\Delta t$ és molt més petit que el temps de canvi de l'estat fisiològic; si
+hi ha forats grans, la taxa d'una mostra s'aplica retroactivament a tot l'interval.
+
+\subsection{Taxa instantània i taxa suavitzada}
+El total acumulat respon \emph{quant he oxidat fins ara}, però no diu res del ritme
+actual. La taxa instantània respon \emph{a quin ritme oxido ara}, però és sorollosa.
+Un terme mitjà és la mitjana mòbil exponencial \citep{hunter1986}:
+\begin{equation}
+  \alpha_i\approx\frac{\Delta t_i}{\tau},\qquad
+  CHO_{avg}(t_i)=CHO_{avg}(t_{i-1})+\alpha_i\bigl(CHO(t_i)-CHO_{avg}(t_{i-1})\bigr),
+\end{equation}
+on $\alpha_i$ és l'aproximació de primer ordre de $1-e^{-\Delta t_i/\tau}$. La
+constant $\tau$ és un compromís entre estabilitat i reactivitat, no una propietat
+fisiològica.
+
+% ---------------------------------------------------------------------
+\section{Relació amb les guies d'ingesta de carbohidrats}\label{sec:fueling}
+% ---------------------------------------------------------------------
+
+Les recomanacions d'ingesta de carbohidrats durant l'exercici de resistència
+depenen de la durada, i no del pes corporal, perquè el factor limitant és
+l'absorció intestinal (transportadors SGLT1 i GLUT5) \citep{jeukendrup2014}:
+\begin{itemize}
+  \item esforços de menys de 45--60~min: no cal una ingesta significativa;
+  \item d'1 a 2--3~h: $\sim30$--60~g/h;
+  \item de més de 2,5--3~h: fins a $\sim90$~g/h, amb carbohidrats de transport
+        múltiple (glucosa i fructosa).
+\end{itemize}
+Són guies d'\emph{ingesta}, no objectius d'oxidació. En exercici moderat-intens,
+l'oxidació de carbohidrats normalment supera el que es pot absorbir, i la diferència
+la cobreixen el glicogen muscular i hepàtic. Comparar la taxa estimada amb aquests
+límits (uns 60~g/h amb una sola font, uns 90~g/h amb transport múltiple) indica de
+manera aproximada quina part de l'esforç surt dels dipòsits de glicogen.
+
+% ---------------------------------------------------------------------
+\section{Supòsits, abast i precisió}\label{sec:suposits}
+% ---------------------------------------------------------------------
+
+\subsection{Perfil de calibratge}
+Els valors d'ancoratge (taula~\ref{tab:rer}) i la relació $LT_1/LT_2$
+(taula~\ref{tab:lt1}) descriuen un esportista de fons aficionat-entrenat típic
+(cursa o ciclisme, \VOmax\ 45--60~\mlkgmin) que fa una dieta mixta normal (un
+50--55\,\% de l'energia en forma de carbohidrats), s'exercita havent menjat i sense
+càrrega de carbohidrats, fa un esforç estable a temperatura moderada i es troba,
+aproximadament, a la primera hora de l'esforç.
+
+\subsection{Factors que desvien l'estimació}
+La taula~\ref{tab:factors} resumeix els factors coneguts i la direcció del biaix
+que introdueixen.
+
+\begin{table}[htbp]
+\centering
+\caption{Factors que allunyen el RER real del model i efecte sobre l'estimació.}
+\label{tab:factors}
+\small
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.6cm} L >{\raggedright\arraybackslash}p{3.4cm}@{}}
+\toprule
+Factor & Efecte sobre el RER real & Efecte sobre l'estimació \\
+\midrule
+Dejú, dieta baixa en CHO, cetogènica o adaptació al greix &
+Més baix \citep{bergman1999,achten2003cho} & CHO sobreestimat, FAT subestimat \\
+Àpat ric en CHO poc abans & Més alt & CHO lleugerament subestimat \\
+CHO ingerits durant l'esforç & Més alt & CHO lleugerament subestimat \\
+Esportistes d'elit & Més baix a la mateixa intensitat relativa ($\approx0{,}88$
+vs.\ 0,95 al $\sim89\,\%$ del \VOmax) \citep{hetlelid2015} & CHO sobreestimat \\
+Persones poc entrenades & Més alt; relació \FC--\VO\ i llindars menys fiables &
+CHO subestimat, amb més error \\
+Dones & Més baix de mitjana ($\approx0{,}03$)
+\citep{rothschild2022,venables2005} & CHO lleugerament sobreestimat \\
+Durada de l'esforç & Baixa uns 0,0004--0,0006 per minut \citep{rothschild2022} &
+CHO cada cop més sobreestimat a partir de la segona hora \\
+Calor, deshidratació, deriva cardíaca & La \FC\ puja a càrrega constant; el RER real
+tendeix a baixar & \VO\ i CHO sobreestimats \\
+Cursa vs.\ ciclisme & Oxidació de greix més alta corrent \citep{achten2003run}; la
+majoria de dades són de ciclisme & CHO una mica sobreestimat corrent \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Rang d'intensitat}
+Les equacions~\eqref{eq:jw-cho}--\eqref{eq:jw-fat} es van deduir per a exercici
+moderat (aproximadament 50--75\,\% del \VOmax) amb $\RER<1$; fora d'aquest rang són
+una extrapolació. Per sobre de $LT_2$ el model només compta l'ús \emph{oxidatiu} de
+carbohidrats: la glucòlisi anaeròbica també consumeix glicogen però no apareix a
+l'oxidació calculada a partir dels gasos, de manera que l'ús total de glicogen en
+intervals durs queda subestimat.
+
+\subsection{Precisió}
+La dispersió individual del \RER\ a una intensitat relativa donada (desviació
+estàndard $\approx0{,}04$) \citep{goedecke2000} es tradueix, per a l'esportista
+de referència a 140~ppm ($\VO\approx2{,}37$~L/min, $CHO\approx117$~g/h), en uns
+$\pm24$~g/h de CHO, és a dir, aproximadament $\pm20\,\%$:
+\begin{equation}
+  \Delta CHO\approx4{,}210\cdot\VO\cdot\Delta\RER\cdot60
+  =4{,}210\cdot2{,}37\cdot0{,}04\cdot60\approx24~\mathrm{g/h}.
+\end{equation}
+A això s'hi suma l'error de l'estimació de \VO, que depèn de la qualitat de les
+entrades. El resultat s'ha d'interpretar com una indicació de l'ordre de magnitud i
+de les tendències dins d'una sessió, no com una mesura.
+
+% ---------------------------------------------------------------------
+\section{Conclusions}
+% ---------------------------------------------------------------------
+
+Combinant l'equivalència entre reserva de \FC\ i reserva de \VO, una interpolació
+del \RER\ per trams ancorada en els llindars metabòlics i les equacions de
+calorimetria indirecta per a exercici, és possible estimar en temps real l'oxidació
+de carbohidrats i greixos a partir només de la \FC. Els ancoratges triats
+reprodueixen els valors de \RER\ mesurats en esportistes de fons aficionats-entrenats
+alimentats, i els factors que se n'allunyen produeixen biaixos de direcció coneguda.
+Amb una precisió individual d'uns $\pm20\,\%$, el model és útil per orientar la
+reposició de carbohidrats i per seguir tendències dins d'una sessió, però no
+substitueix una mesura de laboratori.
+
+% ---------------------------------------------------------------------
+\begin{thebibliography}{99}
+\small
+
+\bibitem[Achten i Jeukendrup(2003)]{achten2003cho}
+Achten J, Jeukendrup AE.
+\newblock \emph{J Sports Sci}. 2003;21(12):1017--1024.
+
+\bibitem[Achten et~al.(2003)]{achten2003run}
+Achten J, Venables MC, Jeukendrup AE.
+\newblock \emph{Metabolism}. 2003;52(6):747--752.
+
+\bibitem[Andersson Hall et~al.(2016)]{anderssonhall2016}
+Andersson Hall U, Edin F, Pedersen A, Madsen K.
+\newblock Whole-body fat oxidation increases more by prior exercise than overnight
+  fasting in elite endurance athletes.
+\newblock \emph{Appl Physiol Nutr Metab}. 2016;41(4):430--437.
+
+\bibitem[Bassett i Howley(2000)]{bassett2000}
+Bassett DR Jr, Howley ET.
+\newblock Limiting factors for maximum oxygen uptake and determinants of endurance
+  performance.
+\newblock \emph{Med Sci Sports Exerc}. 2000;32(1):70--84.
+
+\bibitem[Bergman i Brooks(1999)]{bergman1999}
+Bergman BC, Brooks GA.
+\newblock \emph{J Appl Physiol}. 1999;86(2):479--487.
+
+\bibitem[Brooks i Mercier(1994)]{brooks1994}
+Brooks GA, Mercier J.
+\newblock Balance of carbohydrate and lipid utilization during exercise: the
+  ``crossover'' concept.
+\newblock \emph{J Appl Physiol}. 1994;76(6):2253--2261.
+
+\bibitem[Edvardsen et~al.(2014)]{edvardsen2014}
+Edvardsen E, Hem E, Anderssen SA.
+\newblock \emph{PLoS One}. 2014;9(1):e85276.
+
+\bibitem[Esteve-Lanao et~al.(2026)]{estevelanao2026}
+Esteve-Lanao J, et~al.
+\newblock \emph{Sports (Basel)}. 2026;14(1):29.
+
+\bibitem[Faude et~al.(2009)]{faude2009}
+Faude O, Kindermann W, Meyer T.
+\newblock Lactate threshold concepts: how valid are they?
+\newblock \emph{Sports Med}. 2009;39(6):469--490.
+
+\bibitem[Frayn(1983)]{frayn1983}
+Frayn KN.
+\newblock Calculation of substrate oxidation rates in vivo from gaseous exchange.
+\newblock \emph{J Appl Physiol}. 1983;55(2):628--634.
+
+\bibitem[Goedecke et~al.(2000)]{goedecke2000}
+Goedecke JH, St~Clair Gibson A, Grobler L, Collins M, Noakes TD, Lambert EV.
+\newblock Determinants of the variability in respiratory exchange ratio at rest and during
+  exercise in trained athletes.
+\newblock \emph{Am J Physiol Endocrinol Metab}. 2000;279(6):E1325--E1334.
+
+\bibitem[Hetlelid et~al.(2015)]{hetlelid2015}
+Hetlelid KJ, et~al.
+\newblock \emph{BMJ Open Sport Exerc Med}. 2015;1(1):e000047.
+
+\bibitem[Hunter(1986)]{hunter1986}
+Hunter JS.
+\newblock The exponentially weighted moving average.
+\newblock \emph{J Qual Technol}. 1986;18(4):203--210.
+
+\bibitem[Jeukendrup(2014)]{jeukendrup2014}
+Jeukendrup AE.
+\newblock A step towards personalized sports nutrition: carbohydrate intake during
+  exercise.
+\newblock \emph{Sports Med}. 2014;44(Suppl 1):S25--S33.
+
+\bibitem[Jeukendrup i Wallis(2005)]{jeukendrup2005}
+Jeukendrup AE, Wallis GA.
+\newblock Measurement of substrate oxidation during exercise by means of gas
+  exchange measurements.
+\newblock \emph{Int J Sports Med}. 2005;26(Suppl 1):S28--S37.
+
+\bibitem[Karvonen et~al.(1957)]{karvonen1957}
+Karvonen MJ, Kentala E, Mustala O.
+\newblock The effects of training on heart rate; a longitudinal study.
+\newblock \emph{Ann Med Exp Biol Fenn}. 1957;35(3):307--315.
+
+\bibitem[Lucía et~al.(2000)]{lucia2000}
+Lucía A, et~al.
+\newblock \emph{Med Sci Sports Exerc}. 2000;32(10):1777--1782.
+
+\bibitem[Martínez-Noguera et~al.(2020)]{martineznoguera2020}
+Martínez-Noguera FJ, et~al.
+\newblock \emph{Nutrients}. 2020;12(12):3911.
+
+\bibitem[Nuuttila et~al.(2025)]{nuuttila2025}
+Nuuttila OP, et~al.
+\newblock \emph{Eur J Appl Physiol}. 2025;125(8):2161--2171.
+
+\bibitem[Peinado et~al.(2016)]{peinado2016}
+Peinado AB, et~al.
+\newblock \emph{Biol Sport}. 2016;33(4):373--380.
+
+\bibitem[Péronnet i Massicotte(1991)]{peronnet1991}
+Péronnet F, Massicotte D.
+\newblock Table of nonprotein respiratory quotient: an update.
+\newblock \emph{Can J Sport Sci}. 1991;16(1):23--29.
+
+\bibitem[Rothschild et~al.(2022)]{rothschild2022}
+Rothschild JA, Kilding AE, Stewart T, Plews DJ.
+\newblock Factors influencing substrate oxidation during submaximal cycling: a modelling
+  analysis.
+\newblock \emph{Sports Med}. 2022;52(11):2775--2795.
+
+\bibitem[Swain i Leutholtz(1997)]{swain1997}
+Swain DP, Leutholtz BC.
+\newblock Heart rate reserve is equivalent to \%VO$_2$ reserve, not to
+  \%VO$_2$max.
+\newblock \emph{Med Sci Sports Exerc}. 1997;29(3):410--414.
+
+\bibitem[Venables et~al.(2005)]{venables2005}
+Venables MC, Achten J, Jeukendrup AE.
+\newblock \emph{J Appl Physiol}. 2005;98(1):160--167.
+
+\end{thebibliography}
+
+\end{document}

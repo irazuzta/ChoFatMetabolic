@@ -1,17 +1,47 @@
 # CHO/FAT Metabolic Pro
 
 Technical documentation for the **CHO/FAT Metabolic Pro** data field for Garmin Connect
-IQ: it estimates carbohydrate and fat oxidation in real time during exercise from
-heart rate alone.
+IQ: it estimates carbohydrate and fat oxidation in real time during exercise, using only
+your watch or Edge — no power meter, no extra account, no payment.
 
 👉 **[Get it on the Connect IQ Store](https://apps.garmin.com/es-ES/apps/d1d623e2-36e9-42c9-a673-fb37d8e8830e)**
+
+## How it works, in two lines
+
+- **How much energy** you spend comes from **Garmin**, the same calories you see in
+  Garmin Connect. Keep your Garmin profile (weight, age, maximum HR) and your HR zones
+  up to date.
+- **How that energy is split** between carbohydrate and fat is the app's own estimate,
+  based on your heart rate and your thresholds. It follows published science, but it
+  has not been validated with a gas analyser: treat it as a guide, not a measurement.
+
+## What's new in 1.0
+
+- The energy now comes from Garmin (`Activity.Info.calories`). Up to version 0.5 the app
+  estimated it from heart rate alone, and it tended to come out higher than Garmin's.
+- The grams always add up to exactly Garmin's energy.
+- If Garmin gives no energy, the field falls back automatically to the previous HR-only
+  model.
+- The screen, the settings and the fields saved in Garmin Connect do not change.
+
+## Documentation
 
 - **[User guide](03-user-guide.md)** — a plain-language explanation of what the
   data field shows and how to configure it. Start here if you just want to use
   the app.
-- **[Theoretical basis](01-theoretical-basis.md)** — the estimation model itself:
-  equations, parameters, scientific references. A self-contained document,
-  independent of any implementation detail.
+- **Theoretical basis**
+    - **[HR + Garmin energy (1.0)](04-theoretical-basis-garmin-energy.md)** — the model
+      used from version 1.0: Garmin's energy split with the RER estimated from HR.
+    - **[HR model (up to 0.5)](01-theoretical-basis.md)** — the original model, which
+      estimates everything from HR. Version 1.0 still uses it for the RER and as a
+      fallback.
 - **[How the app works](02-app-implementation.md)** — how the data field is
-  implemented: architecture, resolving the physiological profile, performance,
-  color coding, deployment to the watch.
+  implemented: profile, calculation cycle, fallback mode, screen, color coding,
+  deployment to the watch.
+
+## Papers
+
+| Model | English | Català |
+|---|---|---|
+| Estimating carbohydrate and fat oxidation from heart rate and Garmin's energy estimate (1.0) | [PDF](paper/model-fc-energia.en.pdf) | [PDF](paper/model-fc-energia.ca.pdf) |
+| Estimating carbohydrate and fat oxidation from heart rate (up to 0.5) | [PDF](paper/model-fc.en.pdf) | [PDF](paper/model-fc.ca.pdf) |

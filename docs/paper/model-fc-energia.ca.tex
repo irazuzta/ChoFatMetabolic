@@ -1,0 +1,1063 @@
+% =====================================================================
+%  Estimació de l'oxidació de carbohidrats i greixos a partir de la
+%  freqüència cardíaca i de l'energia estimada per Garmin (article, en català)
+%  Versió estable del 21/11/2026 (revisió: punts 1-77).
+%  Compilar: pdflatex model-fc-energia.ca.tex (dues passades)
+% =====================================================================
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[catalan]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[a4paper,margin=2.4cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{icomma}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{needspace}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepackage[most]{tcolorbox}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+
+\captionsetup{font=small,labelfont=bf}
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\setlist{itemsep=2pt,topsep=4pt}
+
+% Requadre verd per a les justificacions (el títol complet es passa com a paràmetre)
+\newtcolorbox{requadre}[2][]{enhanced, colback=green!4, colframe=green!45!black,
+  boxrule=0.6pt, arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+  fonttitle=\bfseries\small, title={$\checkmark$\ #2}, #1}
+
+% Requadre blau per a les conclusions d'una secció
+\newtcolorbox{conclusio}{enhanced, colback=blue!4, colframe=blue!50!black,
+  boxrule=0.6pt, arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+  fonttitle=\bfseries\small, title={Conclusió}}
+
+% Enllaç a la web del projecte (canviarà: modificar-lo només aquí)
+\newcommand{\webprojecte}{\url{https://irazuzta.github.io/ChoFatMetabolic/}}
+
+% --- Notació ---------------------------------------------------------
+\newcommand{\sub}[1]{{\scriptscriptstyle\mathrm{#1}}}   % subíndexs petits
+\newcommand{\CHO}{\sub{CHO}}
+\newcommand{\FAT}{\sub{FAT}}
+\newcommand{\tot}{\sub{total}}
+\newcommand{\smax}{{\scriptscriptstyle\text{màx}}}
+\newcommand{\cho}{\ensuremath{\mathit{CHO}}}               % ritme d'oxidació (g/min)
+\newcommand{\fat}{\ensuremath{\mathit{FAT}}}
+\newcommand{\VO}{\ensuremath{\mathit{VO}_2}}               % ritme (L/min)
+\newcommand{\VCO}{\ensuremath{\mathit{VCO}_2}}
+\newcommand{\VOmax}{\ensuremath{\mathit{VO}_{2\smax}}}
+\newcommand{\RER}{\ensuremath{\mathit{RER}}}
+\newcommand{\RERi}{\ensuremath{\overline{\mathit{RER}}}}
+\newcommand{\FC}{\ensuremath{\mathit{FC}}}
+\newcommand{\FCmax}{\ensuremath{\mathit{FC}_{\smax}}}
+\newcommand{\Ion}{\ensuremath{I_{\mathrm{onset}}}}
+\newcommand{\kcal}{\ensuremath{\mathrm{kcal}}}
+
+\title{\textbf{Estimació de l'oxidació de carbohidrats i greixos\\
+a partir de la freqüència cardíaca\\ i de l'energia estimada per Garmin}}
+\author{Jordi Irazuzta\\
+\small\href{mailto:irazuzta@gmail.com}{\texttt{irazuzta@gmail.com}}\\[4pt]
+\small Projecte CHO/FAT Metabolic Pro --- \webprojecte}
+\date{Esborrany --- novembre de 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Aquest treball estima el ritme d'oxidació de carbohidrats (CHO) i de greix (FAT) durant
+l'exercici. Aquesta informació pot servir, per exemple, per decidir quants carbohidrats
+ingerir. La calorimetria indirecta ho calcula amb les equacions de Jeukendrup i Wallis,
+però necessita una anàlisi de gasos per mesurar el consum d'oxigen (\VO) i el quocient
+d'intercanvi respiratori (\RER). Aquí ho estimem a partir d'un rellotge esportiu que mesura
+la freqüència cardíaca (\FC) i dona una estimació de l'energia gastada; en concret, els
+dispositius Garmin. El mètode parteix d'una condició: l'energia dels grams calculats ha de
+ser exactament l'energia que dona Garmin. El \RER\ s'estima a partir de la \FC. El \VO\
+s'obté dividint l'energia per l'energia que dona cada litre d'oxigen. Aquest valor es
+calcula amb les mateixes equacions de Jeukendrup i Wallis i amb l'energia de cada gram de
+carbohidrat (4,1~kcal) i de greix (9,3~kcal), uns valors que es justifiquen amb la
+calorimetria clàssica. Així, la condició es compleix exactament. També s'analitzen
+l'error en funció del \RER, com es passa del ritme al total, les fonts d'error i com aplicar-lo
+en temps real.
+\end{abstract}
+
+\noindent\textbf{Paraules clau:} oxidació de substrats; calorimetria indirecta;
+consum d'oxigen; quocient respiratori; despesa energètica; dispositius portables.
+
+% =====================================================================
+\section{Objectiu}\label{sec:objectiu}
+% =====================================================================
+
+Volem estimar, en cada instant $t$ de l'activitat, el \textbf{ritme d'oxidació} de
+carbohidrats i de greix:
+\[
+  \cho(t),\ \fat(t)\qquad[\mathrm{g/min}],
+\]
+i, a partir d'aquests ritmes, el \textbf{total acumulat} de tota l'activitat, des de 0
+fins a la durada total $T$:
+\begin{equation}
+  \cho_{\tot}(T)=\int_0^T\cho(t)\,dt,\qquad
+  \fat_{\tot}(T)=\int_0^T\fat(t)\,dt .
+  \label{eq:totals}
+\end{equation}
+La integral és el total acumulat: tot el que s'ha oxidat des de l'inici fins a $T$. La
+secció~\ref{sec:total} explica com es calcula amb les dades de Garmin. Si es vol, aquesta informació pot servir per decidir
+quants carbohidrats ingerir durant l'esforç \citep{jeukendrup2014}.
+
+\paragraph{El plantejament.} La calorimetria indirecta calcula aquests ritmes a partir dels
+gasos respiratoris (secció~\ref{sec:jw}), però necessita un analitzador de gasos. Aquí els
+estimem amb els dispositius Garmin (rellotges i ciclocomputadors Edge), que mesuren la \FC\
+i estimen l'energia gastada. Els passos són:
+\begin{enumerate}[leftmargin=*,itemsep=0pt]
+  \item De Garmin obtenim l'energia gastada, $E(t)$ (secció~\ref{sec:energia}).
+  \item El \RER\ s'estima a partir de la \FC\ (secció~\ref{sec:rer}).
+  \item A partir del \RER\ i de $E(t)$ podem estimar el \VO\ (secció~\ref{sec:vo2}).
+  \item Amb el \VO\ i el \RER, les equacions de Jeukendrup i Wallis donen $\cho(t)$ i
+        $\fat(t)$ (secció~\ref{sec:jw}).
+\end{enumerate}
+
+\paragraph{Per què aquest plantejament.} Una altra opció és estimar el consum d'oxigen a partir de la \FC, amb una relació fixa entre tots
+dos \citep{swain1997,chofatfc2026}. Però llavors l'energia que surt dels grams calculats no
+coincideix amb la que mostra Garmin: acostuma a sortir més alta. Garmin fa servir més
+informació: a més de la \FC, el perfil de l'usuari i la relació de cada persona entre \FC\ i
+consum d'oxigen \citep{firstbeat2007}.
+
+Per això aquest treball parteix d'una \textbf{condició}: l'energia dels grams calculats ha
+de ser exactament l'energia que dona Garmin. L'anomenem, amb una mica d'humor,
+«principi de conservació de l'energia Garmin», per analogia amb el principi de la física:
+aquí l'energia no la fixa la natura, sinó Garmin. El mètode no torna a calcular l'energia;
+només la reparteix entre els dos combustibles. Aquesta condició és la que ho determina tot
+(secció~\ref{sec:vo2}). La resta del plantejament i la notació segueixen el model que
+estima el consum d'oxigen a partir de la \FC\ \citep{chofatfc2026}.
+
+\paragraph{Organització.} La secció~\ref{sec:conceptes} introdueix els conceptes necessaris. Després es respon, per
+ordre, a dues preguntes: \textbf{com es calculen} $\cho(t)$ i $\fat(t)$
+(seccions~\ref{sec:jw}--\ref{sec:sensibilitat}) i \textbf{com es calculen els totals}
+(secció~\ref{sec:total}). Al final hi ha un exemple, les fonts d'error i com
+aplicar el mètode en temps real.
+
+% =====================================================================
+\section{Conceptes previs}\label{sec:conceptes}
+% =====================================================================
+
+\subsection{Consum d'oxigen (\texorpdfstring{$\mathit{VO}_2$}{VO2}) i producció de
+CO\texorpdfstring{$_2$}{2} (\texorpdfstring{$\mathit{VCO}_2$}{VCO2})}\label{sec:gasos}
+$\VO(t)$ és el volum d'oxigen que el cos consumeix per unitat de temps. Es mesura en
+L/min (valor absolut) o en mL$\cdot$kg$^{-1}\cdot$min$^{-1}$ (relatiu al pes, per comparar
+persones). $\VCO(t)$ és, de la mateixa manera, el volum de diòxid de carboni produït per
+unitat de temps. Tots dos són la base de la \emph{calorimetria indirecta}: oxidar greix o
+carbohidrats consumeix O$_2$ i produeix CO$_2$ en proporcions diferents, de manera que
+mesurant $\VO$ i $\VCO$ es pot saber quin combustible s'està cremant sense mesurar-lo
+directament.
+
+\subsection{Consum màxim d'oxigen (\texorpdfstring{$\mathit{VO}_{2\max}$}{VO2max})}
+$\VOmax$ és el valor més alt de $\VO$ que una persona pot assolir. Aquí només s'utilitza
+per expressar intensitats (per exemple, ``al 63\,\% del $\VOmax$'') i per detectar valors
+de $\VO(t)$ impossibles.
+
+\subsection{Quocient d'intercanvi respiratori (\texorpdfstring{$\mathit{RER}$}{RER})}
+\begin{equation}
+  \RER(t)=\frac{\VCO(t)}{\VO(t)} .
+  \label{eq:rer-def}
+\end{equation}
+És un sol nombre que indica la barreja de combustibles. Oxidar glucosa produeix tant
+CO$_2$ com O$_2$ consumeix ($\RER=1$), mentre que oxidar greix en produeix menys
+($\RER\approx0{,}70$). En exercici submàxim pren valors entre aquests dos extrems
+\citep{peronnet1991}. És la variable central del repartiment entre carbohidrats i greix.
+
+\subsection{Energia estimada pels dispositius Garmin}\label{sec:energia}
+Els dispositius Garmin calculen l'energia de l'activitat amb un mètode de Firstbeat, una
+empresa finlandesa especialitzada en l'anàlisi fisiològica a partir de la freqüència
+cardíaca; la seva divisió de consum (Firstbeat Analytics) forma part de Garmin des del 2020. El mètode fa servir la \FC\ i el perfil de l'usuari, i té en compte la relació de cada persona entre
+\FC\ i consum d'oxigen \citep{firstbeat2007}. Anomenem $E(t)$ el \emph{ritme} de despesa
+d'energia, en kcal/min, i $E_{\tot}(t)$ l'energia \emph{acumulada} des de l'inici, en kcal:
+\begin{equation}
+  E_{\tot}(t)=\int_0^t E(s)\,ds .
+  \label{eq:etotal}
+\end{equation}
+Garmin dona $E_{\tot}(t)$; el ritme $E(t)$ s'obté de les pujades d'aquest comptador
+(secció~\ref{sec:total}). És l'energia \emph{total}: inclou també
+la del metabolisme de repòs durant aquell temps (Garmin Connect la separa en calories en
+repòs i calories actives). És la que cal, perquè les equacions de calorimetria compten tota
+l'oxidació a partir de tot l'oxigen consumit. És una estimació, no una mesura: els estudis
+sobre dispositius portables hi troben errors més grans que en la mesura de la \FC\
+\citep{shcherbina2017,fuller2020}.
+
+\needspace{10cm}
+\subsection{Notació}
+La taula~\ref{tab:notacio} recull els símbols del treball.
+
+\begin{table}[H]
+\centering
+\caption{Notació.}
+\label{tab:notacio}
+\small
+\begin{tabularx}{\textwidth}{@{}l L l@{}}
+\toprule
+Símbol & Significat & Unitats \\
+\midrule
+$\cho(t)$, $\fat(t)$ & Ritme d'oxidació de carbohidrats i de greix (el resultat) & g/min \\
+$\cho_{\tot}(T)$, $\fat_{\tot}(T)$ & Total oxidat des de l'inici fins a $T$ & g \\
+$\VO(t)$, $\VCO(t)$ & Consum d'O$_2$ i producció de CO$_2$ & L/min \\
+$\RER(t)$ & Quocient d'intercanvi respiratori, $\VCO/\VO$ & --- \\
+$E_{\tot}(t)$ & Energia acumulada des de l'inici (la dona Garmin) & kcal \\
+$E(t)$ & Ritme de despesa d'energia (s'obté de $E_{\tot}$) & kcal/min \\
+$g_{\CHO}(\RER)$, $g_{\FAT}(\RER)$ & Grams de substrat oxidats per cada litre d'O$_2$ & g/L \\
+$e_{\CHO}$, $e_{\FAT}$ & Energia per gram de substrat oxidat; constants: 4,1 i 9,3 & kcal/g \\
+$k(\RER)$ & Energia alliberada per cada litre d'O$_2$ & kcal/L \\
+$\FC(t)$, $LT_1$, $LT_2$, $\FCmax$, $\Ion$ & Freqüència cardíaca i punts de referència del \RER & ppm \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% =====================================================================
+\section{El punt de partida: les equacions de Jeukendrup i Wallis}\label{sec:jw}
+% =====================================================================
+
+La relació entre l'oxigen consumit, el CO$_2$ produït i els grams de substrat oxidats es
+coneix des de les equacions clàssiques de calorimetria indirecta de \citet{frayn1983}. Són
+equacions «no proteiques»: suposen que tota l'energia surt dels carbohidrats i dels
+greixos, i no tenen en compte l'oxidació de proteïnes, que durant l'exercici aporta poca
+energia. Aquest treball fa servir la versió per a exercici de \citet{jeukendrup2005}:
+\begin{align}
+  \cho(t) &= 4{,}210\cdot\VCO(t)-2{,}962\cdot\VO(t), \label{eq:jw-cho}\\
+  \fat(t) &= 1{,}695\cdot\VO(t)-1{,}701\cdot\VCO(t), \label{eq:jw-fat}
+\end{align}
+amb els gasos en L/min i el resultat en g/min.
+
+\paragraph{Què cal per fer-les servir?} Les dues variables de la
+secció~\ref{sec:gasos}: $\VO(t)$ i $\VCO(t)$. Cap de les dues es pot mesurar sense un
+analitzador de gasos, i per tant cal estimar-les.
+
+\subsection{Reescriure les equacions amb el RER}\label{sec:jw-rer}
+En lloc d'estimar $\VO$ i $\VCO$ per separat, és més pràctic estimar $\VO$ i el
+\RER~\eqref{eq:rer-def}. Substituint $\VCO(t)=\RER(t)\cdot\VO(t)$:
+\begin{align}
+  \cho(t) &= \VO(t)\cdot\bigl(4{,}210\cdot\RER(t)-2{,}962\bigr), \label{eq:jw-cho-rer}\\
+  \fat(t) &= \VO(t)\cdot\bigl(1{,}695-1{,}701\cdot\RER(t)\bigr). \label{eq:jw-fat-rer}
+\end{align}
+
+\paragraph{Els extrems.} Fora del rang 0,704--0,9965 un dels dos parèntesis surt negatiu;
+per això es posa a zero ($\cho=0$ per sota, $\fat=0$ per sobre).
+
+\needspace{12cm}
+\paragraph{Ara calen dues estimacions:} $\RER(t)$ (secció~\ref{sec:rer}) i $\VO(t)$
+(secció~\ref{sec:vo2}). El \RER\ va primer, perquè per estimar el $\VO$ cal conèixer-lo.
+La figura~\ref{fig:esquema} resumeix el camí.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=6mm and 7mm,
+  caixa/.style={draw, rounded corners=2pt, align=center, font=\small, minimum height=9mm, inner sep=4pt},
+  dada/.style={caixa, fill=gray!12},
+  pas/.style={caixa, fill=blue!7},
+  clau/.style={caixa, fill=orange!20, very thick},
+  res/.style={caixa, fill=green!12},
+  fl/.style={-{Stealth[length=2.2mm]}, thick}]
+\node[dada] (fc) {$\FC(t)$\\(Garmin)};
+\node[pas, right=of fc] (rer) {$\RER(t)$\\ \S\ref{sec:rer}};
+\node[pas, right=of rer] (g) {$g_{\CHO},\ g_{\FAT}$\\ \S\ref{sec:g}};
+\node[clau, right=of g] (k) {$k(\RER)$\\ \S\ref{sec:k}};
+\node[pas, above=of k] (e) {$e_{\CHO},\ e_{\FAT}$ \ \S\ref{sec:e}};
+\node[dada, below=of fc, yshift=-4mm] (en) {$E_{\tot}(t)$ (Garmin)\\ $\to$ ritme $E(t)$};
+\node[pas, below=of k, yshift=-4mm] (v) {$\VO(t)=E(t)/k$\\ \S\ref{sec:vo2-calcul}};
+\node[res, below=of v] (m) {$\cho(t),\ \fat(t)$\\ \S\ref{sec:grams}};
+\node[res, left=12mm of m] (t) {$\cho_{\tot},\ \fat_{\tot}$\\ \S\ref{sec:total}};
+\draw[fl] (fc) -- (rer);
+\draw[fl] (rer) -- (g);
+\draw[fl] (g) -- (k);
+\draw[fl] (e) -- (k);
+\draw[fl] (k) -- (v);
+\draw[fl] (en) -- (v);
+\draw[fl] (v) -- (m);
+\draw[fl] (m) -- (t);
+\end{tikzpicture}
+\caption{Esquema del mètode. La \FC\ dona el $\RER(t)$, i el \RER\ els grams oxidats per
+litre d'oxigen, $g_{\CHO}$ i $g_{\FAT}$. Amb l'energia per gram de cada substrat, $e_{\CHO}$ i
+$e_{\FAT}$, s'obté l'energia per litre d'oxigen, $k$, que converteix el ritme d'energia que
+s'obté de Garmin, $E(t)$, en consum d'oxigen, $\VO(t)$. Amb el consum d'oxigen i el \RER\
+s'obté el ritme d'oxidació, $\cho(t)$ i $\fat(t)$, i a partir d'aquí els totals,
+$\cho_{\tot}$ i $\fat_{\tot}$.}
+\label{fig:esquema}
+\end{figure}
+
+% =====================================================================
+\section{Estimar \texorpdfstring{$\mathit{RER}(t)$}{RER(t)}: llindars metabòlics}\label{sec:rer}
+% =====================================================================
+
+El \RER\ puja amb la intensitat, sobretot al voltant dels llindars metabòlics: el primer
+($LT_1$, llindar aeròbic) i el segon ($LT_2$, llindar de lactat o anaeròbic). S'estima a
+partir de la \FC\ tal com es descriu a \citep{chofatfc2026}, on hi ha la justificació
+completa. Aquí només se'n dona el resultat.
+
+\subsection{Model d'interpolació}
+Es fixen quatre punts de \FC\ ($\Ion$, $LT_1$, $LT_2$ i $\FCmax$) i un valor de \RER\ per a
+cadascun (taula~\ref{tab:ancoratges}). Entre dos punts consecutius interpolem linealment.
+Com que tenim 4 punts de referència, obtenim una funció definida a trossos amb 5 parts:
+constant fins a $\Ion$, tres trams rectes entre punts, i constant a partir de $\FCmax$:
+\begin{equation}
+\RER(t)=
+\begin{cases}
+R_{\mathrm{basal}} & \FC(t)\le\Ion,\\[4pt]
+R_{\mathrm{basal}}+\dfrac{\FC(t)-\Ion}{LT_1-\Ion}\cdot\bigl(R_{LT_1}-R_{\mathrm{basal}}\bigr) & \Ion<\FC(t)\le LT_1,\\[10pt]
+R_{LT_1}+\dfrac{\FC(t)-LT_1}{LT_2-LT_1}\cdot\bigl(R_{LT_2}-R_{LT_1}\bigr) & LT_1<\FC(t)\le LT_2,\\[10pt]
+R_{LT_2}+\dfrac{\FC(t)-LT_2}{\FCmax-LT_2}\cdot\bigl(R_{\smax}-R_{LT_2}\bigr) & LT_2<\FC(t)\le\FCmax,\\[6pt]
+R_{\smax} & \FC(t)>\FCmax.
+\end{cases}
+\label{eq:rer}
+\end{equation}
+
+\begin{table}[H]
+\centering
+\caption{Valors del \RER\ als quatre punts de referència \citep{chofatfc2026}.}
+\label{tab:ancoratges}
+\small
+\begin{tabular}{@{}llc@{}}
+\toprule
+Punt de \FC & Nom & \RER \\
+\midrule
+Fins a $\Ion$ (esforç suau) & $R_{\mathrm{basal}}$ & 0,86 \\
+$LT_1$ & $R_{LT_1}$ & 0,91 \\
+$LT_2$ & $R_{LT_2}$ & 0,98 \\
+$\FCmax$ i per sobre & $R_{\smax}$ & 1,00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Per sobre de $LT_2$ el \RER\ mesurat pot passar d'1, però aquest excés no és oxidació de
+carbohidrats \citep{chofatfc2026}. Per això el sostre és 1,00, on el greix val zero
+(secció~\ref{sec:jw-rer}).
+
+\subsection{Paràmetres}\label{sec:parametres}
+Si l'esportista s'ha fet una prova de lactat o d'esforç amb gasos, es fan servir els seus
+valors reals. Si no, s'estimen com a \citep{chofatfc2026}: $LT_1\approx0{,}89\cdot LT_2$ i
+$\Ion\approx0{,}70\cdot LT_2$.
+
+Per calcular els grams no calen el pes ni el $\VOmax$: ja hi són dins de l'energia que
+calcula Garmin. Però aquesta energia depèn del perfil de l'usuari al dispositiu (pes,
+edat, \FC\ màxima, $\VOmax$), i per tant cal tenir-lo al dia.
+
+El \RER\ pesa poc en el consum d'oxigen i molt en el repartiment entre carbohidrats i greix
+(secció~\ref{sec:sensibilitat}). Per això el que més importa és que els llindars, sobretot
+$LT_2$, estiguin ben posats.
+
+% =====================================================================
+\section{Estimar \texorpdfstring{$\mathit{VO}_2(t)$}{VO2(t)} a partir de l'energia de Garmin}\label{sec:vo2}
+% =====================================================================
+
+\paragraph{Què tenim.} El ritme de despesa d'energia $E(t)$, que s'obté a partir de
+l'energia acumulada que dona Garmin, $E_{\tot}(t)$ (seccions~\ref{sec:energia}
+i~\ref{sec:total}), i el $\RER(t)$, que s'estima amb la \FC\ (secció~\ref{sec:rer}).
+
+\paragraph{Què volem.} El consum d'oxigen $\VO(t)$, amb la condició de la
+secció~\ref{sec:objectiu}: l'energia dels grams que en surtin ha de ser exactament $E(t)$.
+
+\paragraph{Com ho fem.} Si multipliquem les kcal que allibera cada litre d'oxigen en
+l'instant $t$, $k\bigl(\RER(t)\bigr)$ (depèn de la barreja de combustibles d'aquell moment),
+pels litres d'oxigen que es consumeixen per minut en aquell instant, $\VO(t)$, obtenim el
+ritme de despesa d'energia en l'instant $t$, $E(t)$, en kcal/min:
+\begin{equation}
+  E(t)=k\bigl(\RER(t)\bigr)\cdot\VO(t) .
+  \label{eq:energia-k}
+\end{equation}
+L'energia $E(t)$ la podem obtenir del que dona Garmin. Per tant, si estimem $k$ (l'energia per litre), només
+cal aïllar el consum d'oxigen:
+\begin{equation}
+  \VO(t)=\frac{E(t)}{k\bigl(\RER(t)\bigr)} .
+  \label{eq:vo2}
+\end{equation}
+$k$ és la peça clau. Es construeix en tres passos: els grams que crema
+cada litre d'oxigen (secció~\ref{sec:g}), l'energia de cada gram (secció~\ref{sec:e}) i,
+multiplicant, l'energia de cada litre (secció~\ref{sec:k}).
+
+\subsection{Grams de cada substrat per litre d'oxigen}\label{sec:g}
+\paragraph{Per què.} Ens interessa saber quants grams de cada substrat es cremen per
+\emph{cada litre} d'oxigen. Així, quan sapiguem quants litres per minut es consumeixen,
+només caldrà multiplicar.
+
+\paragraph{Com.} Partim de les equacions de Jeukendrup i Wallis amb el
+\RER~\eqref{eq:jw-cho-rer}--\eqref{eq:jw-fat-rer}:
+\[
+  \cho(t)=\VO(t)\cdot\bigl(4{,}210\cdot\RER(t)-2{,}962\bigr),\qquad
+  \fat(t)=\VO(t)\cdot\bigl(1{,}695-1{,}701\cdot\RER(t)\bigr).
+\]
+Dividim els dos costats per $\VO(t)$:
+\[
+  \frac{\cho(t)}{\VO(t)}=4{,}210\cdot\RER(t)-2{,}962,\qquad
+  \frac{\fat(t)}{\VO(t)}=1{,}695-1{,}701\cdot\RER(t) .
+\]
+A l'esquerra hi ha grams per minut dividits per litres per minut, és a dir, grams per
+litre: (g/min)\,/\,(L/min) = g/L. Són els grams que crema cada
+litre d'oxigen, i els anomenem:
+\begin{align}
+  g_{\CHO}(\RER) &= 4{,}210\cdot\RER-2{,}962 \qquad[\mathrm{g/L}], \label{eq:gc}\\
+  g_{\FAT}(\RER) &= 1{,}695-1{,}701\cdot\RER \qquad[\mathrm{g/L}]. \label{eq:gf}
+\end{align}
+Només depenen del \RER. Per exemple, amb $\RER=0{,}86$ cada litre d'oxigen crema 0,66~g
+de carbohidrats i 0,23~g de greix. Als extrems es posen a zero, com a la
+secció~\ref{sec:jw-rer}.
+
+\paragraph{\RER\ o $\RER(t)$.} Quan definim una funció del \RER, com $g_{\CHO}(\RER)$ o
+$k(\RER)$, escrivim només \RER: és la variable de la funció i pot prendre qualsevol valor.
+Quan l'apliquem en un instant, escrivim $\RER(t)$: per exemple, $g_{\CHO}\bigl(\RER(t)\bigr)$
+són els grams per litre en l'instant $t$.
+
+\subsection{Energia per gram de cada substrat}\label{sec:e}
+\paragraph{Què són.} Oxidar completament un gram de substrat allibera una quantitat fixa
+d'energia, que depèn només de la seva composició química: la seva \emph{densitat
+energètica}. El mètode fa servir dues constants:
+\begin{equation}
+  e_{\CHO}=4{,}1~\kcal/\mathrm{g},\qquad e_{\FAT}=9{,}3~\kcal/\mathrm{g}.
+  \label{eq:e}
+\end{equation}
+
+\paragraph{D'on surten.} La taula~\ref{tab:densitats} recull els valors de referència.
+Els factors d'Atwater (4 i 9~kcal/g) són els que s'usen en nutrició per als aliments
+\citep{atwater1900}. En calorimetria es fan servir els valors del substrat concret que
+s'oxida \citep{livesey1988}: durant l'exercici, el carbohidrat oxidat és sobretot
+glicogen i el greix, triacilglicerols. Els valors triats es troben en aquest rang, prop
+del glicogen i dels triacilglicerols, que són precisament els substrats per als quals
+estan pensades les equacions de Jeukendrup i Wallis.
+
+\begin{table}[H]
+\centering
+\caption{Energia alliberada per gram de substrat oxidat.}
+\label{tab:densitats}
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Font & Carbohidrats (kcal/g) & Greixos (kcal/g) \\
+\midrule
+Factors d'Atwater (aliments) \citep{atwater1900} & 4 & 9 \\
+Glucosa / glicogen oxidats \citep{livesey1988} & $\approx3{,}7$ / $\approx4{,}2$ & --- \\
+Triacilglicerols oxidats \citep{livesey1988} & --- & $\approx9{,}4$ \\
+\textbf{Aquest treball} ($e_{\CHO}$, $e_{\FAT}$) & \textbf{4,1} & \textbf{9,3} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Per què són vàlids.} A més d'encaixar amb la literatura, els dos valors es
+justifiquen amb dues comprovacions, que es fan a la secció~\ref{sec:k} i es marquen amb un
+requadre verd:
+\begin{enumerate}[label=(\alph*)]
+  \item reprodueixen la taula de calorimetria de \citet{peronnet1991} als dos extrems;
+  \item l'energia per litre d'oxigen que en resulta coincideix amb la fórmula clàssica de
+        \citet{weir1949} amb menys d'un 1,5\,\% de diferència.
+\end{enumerate}
+A més, a la secció~\ref{sec:grams} es comprova que es compleix la condició de partida:
+l'energia dels grams calculats és exactament l'energia que dona Garmin.
+
+\subsection{Energia per litre d'oxigen, \texorpdfstring{$k(\mathit{RER})$}{k(RER)}}\label{sec:k}
+És la peça clau del mètode. El raonament és directe:
+\begin{itemize}
+  \item cada litre d'oxigen oxida $g_{\CHO}$ grams de carbohidrat i $g_{\FAT}$ grams de
+        greix (secció~\ref{sec:g});
+  \item cada gram allibera $e_{\CHO}$ o $e_{\FAT}$ kilocalories (secció~\ref{sec:e});
+  \item per tant, cada litre d'oxigen allibera
+\end{itemize}
+\begin{equation}
+  k(\RER)=e_{\CHO}\cdot g_{\CHO}(\RER)+e_{\FAT}\cdot g_{\FAT}(\RER)\qquad[\kcal/\mathrm{L}].
+  \label{eq:k}
+\end{equation}
+
+\paragraph{Una fórmula més simple.} Entre $\RER\approx0{,}704$ i $0{,}9965$, on es cremen
+tots dos substrats, es poden substituir~\eqref{eq:gc}, \eqref{eq:gf} i~\eqref{eq:e}
+a~\eqref{eq:k} i agrupar termes:
+\begin{align}
+  k(\RER) &= 4{,}1\cdot(4{,}210\cdot\RER-2{,}962)+9{,}3\cdot(1{,}695-1{,}701\cdot\RER) \notag\\
+          &= 17{,}261\cdot\RER-12{,}144+15{,}764-15{,}819\cdot\RER \notag\\
+          &= (17{,}261-15{,}819)\cdot\RER+(15{,}764-12{,}144) \notag\\
+          &= 3{,}620+1{,}442\cdot\RER . \label{eq:klin}
+\end{align}
+Amb aquesta forma es veu de seguida que $k$ varia poc: va de 4,63~kcal/L (amb
+$\RER=0{,}704$) a 5,06~kcal/L (amb $\RER=0{,}9965$). Per tant, energia i oxigen són gairebé
+proporcionals. Que variï poc no vol dir que sigui constant: es calcula amb el \RER\ de
+cada instant.
+
+\begin{requadre}{Justificació de $e_{\CHO}$ i $e_{\FAT}$ --- (a) Calorimetria clàssica}
+\textbf{Què es comprova:} que $e_{\CHO}$ i $e_{\FAT}$ donen la mateixa energia per litre
+d'oxigen que la calorimetria clàssica quan només es crema un substrat.
+
+\smallskip
+Segons la taula de \citet{peronnet1991}, un litre d'O$_2$ allibera 5,047~kcal quan només
+es crema carbohidrat i 4,686~kcal quan només es crema greix. En aquests extrems, cada litre
+crema $g_{\CHO}(1{,}00)=1{,}248$~g de carbohidrat o $g_{\FAT}(0{,}70)=0{,}504$~g de greix.
+Dividint l'energia pels grams:
+\[
+  \frac{5{,}047}{1{,}248}\approx4{,}05~\kcal/\mathrm{g},\qquad
+  \frac{4{,}686}{0{,}504}\approx9{,}30~\kcal/\mathrm{g}.
+\]
+\textbf{Resultat:} són els valors de~\eqref{eq:e}.
+\end{requadre}
+
+\begin{requadre}{Justificació de $e_{\CHO}$ i $e_{\FAT}$ --- (b) Fórmula de Weir}
+\textbf{Què es comprova:} que l'energia per litre d'oxigen $k(\RER)$ coincideix amb la
+fórmula clàssica de \citet{weir1949}. Aquesta fórmula no s'utilitza en el mètode: només
+serveix per comprovar $k$.
+
+\smallskip
+\textbf{D'on surt la fórmula de Weir en funció del \RER.} Weir relaciona gasos i energia
+(sense el terme de nitrogen de l'orina):
+\[
+  E(t)=3{,}941\cdot\VO(t)+1{,}106\cdot\VCO(t).
+\]
+Com a la secció~\ref{sec:jw-rer}, substituïm $\VCO(t)=\RER(t)\cdot\VO(t)$:
+\[
+  E(t)=3{,}941\cdot\VO(t)+1{,}106\cdot\RER(t)\cdot\VO(t)=\VO(t)\cdot\bigl(3{,}941+1{,}106\cdot\RER(t)\bigr).
+\]
+Dividim per $\VO(t)$ per tenir l'energia de cada litre, que és el mateix que és $k$:
+\[
+  \frac{E(t)}{\VO(t)}=3{,}941+1{,}106\cdot\RER(t)\qquad[\kcal/\mathrm{L}].
+\]
+La comparem amb la nostra, $k(\RER)=3{,}620+1{,}442\cdot\RER$~\eqref{eq:klin}: són dues
+rectes molt properes.
+
+\medskip
+\noindent
+\begin{minipage}[c]{0.44\linewidth}
+\centering
+\footnotesize
+\begin{tabular}{@{}cccc@{}}
+\toprule
+\RER & $k$ & Weir & diferència \\
+\midrule
+0,70 & 4,690 & 4,715 & $-0{,}5\,\%$ \\
+0,80 & 4,773 & 4,826 & $-1{,}1\,\%$ \\
+0,86 & 4,859 & 4,892 & $-0{,}7\,\%$ \\
+0,91 & 4,931 & 4,947 & $-0{,}3\,\%$ \\
+0,95 & 4,989 & 4,992 & $-0{,}1\,\%$ \\
+0,98 & 5,032 & 5,025 & $+0{,}1\,\%$ \\
+1,00 & 5,117 & 5,047 & $+1{,}4\,\%$ \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+$k$ i Weir en kcal per litre d'O$_2$.
+\end{minipage}\hfill
+\begin{minipage}[c]{0.53\linewidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth, height=4.6cm,
+  xmin=0.70, xmax=1.00, xlabel={\RER},
+  ylabel={kcal/L d'O$_2$}, ymin=4.6, ymax=5.15, grid=major, grid style={gray!25},
+  xticklabel style={/pgf/number format/fixed,/pgf/number format/precision=2},
+  yticklabel style={/pgf/number format/fixed,/pgf/number format/precision=1},
+  tick label style={font=\scriptsize}, label style={font=\scriptsize},
+  /pgf/number format/use comma,
+  legend style={font=\scriptsize, at={(0.03,0.97)}, anchor=north west, draw=none, fill=white, fill opacity=0.8}]
+\addplot[thick, black] coordinates {
+ (0.7036,4.6337) (0.72,4.6573) (0.74,4.6862) (0.76,4.7150) (0.78,4.7438) (0.80,4.7727)
+ (0.82,4.8015) (0.84,4.8303) (0.86,4.8592) (0.88,4.8880) (0.90,4.9168) (0.92,4.9457)
+ (0.94,4.9745) (0.96,5.0033) (0.98,5.0322) (0.9965,5.0564) (1.00,5.1168)};
+\addlegendentry{$k(\RER)$}
+\addplot[thick, dashed, black] coordinates {(0.70,4.7152) (1.00,5.0470)};
+\addlegendentry{Weir}
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+
+\medskip
+\textbf{Resultat:} la diferència és inferior a l'1,5\,\% en tot el rang. El petit salt del
+final de la corba, entre $\RER=0{,}9965$ i $1{,}00$, és perquè en aquest tram el greix ja
+val zero (secció~\ref{sec:jw-rer}) i $k$ deixa de ser la recta: només queda
+$e_{\CHO}\cdot g_{\CHO}$. Per això la fila d'1,00 dona $+1{,}4\,\%$.
+\end{requadre}
+
+\subsection{Consum d'oxigen a partir de l'energia}\label{sec:vo2-calcul}
+Amb $k$ ja calculada, s'aplica~\eqref{eq:vo2}. Les unitats quadren:
+\[
+  \VO(t)=\frac{E(t)}{k\bigl(\RER(t)\bigr)}\qquad
+  \Bigl[\frac{\kcal/\mathrm{min}}{\kcal/\mathrm{L}}=\frac{\mathrm{L}}{\mathrm{min}}\Bigr].
+\]
+Per exemple, si es gasten 12~kcal/min i cada litre n'allibera 4,94, es consumeixen
+$12/4{,}94=2{,}43$~L/min d'oxigen. Aquest valor es pot comparar amb el $\VOmax$ per
+detectar valors impossibles.
+
+\subsection{Ritme d'oxidació de cada substrat}\label{sec:grams}
+Tornem a les equacions de Jeukendrup i Wallis amb el
+\RER~\eqref{eq:jw-cho-rer}--\eqref{eq:jw-fat-rer}:
+\[
+  \cho(t)=\VO(t)\cdot\bigl(4{,}210\cdot\RER(t)-2{,}962\bigr).
+\]
+Hi posem el consum d'oxigen que hem obtingut, $\VO(t)=E(t)/k\bigl(\RER(t)\bigr)$~\eqref{eq:vo2}:
+\[
+  \cho(t)=\frac{E(t)}{k\bigl(\RER(t)\bigr)}\cdot\bigl(4{,}210\cdot\RER(t)-2{,}962\bigr).
+\]
+I amb la forma simple de $k$~\eqref{eq:klin} queda una fórmula que només depèn de l'energia
+i del \RER:
+\begin{align}
+  \cho(t) &= E(t)\cdot\frac{4{,}210\cdot\RER(t)-2{,}962}{3{,}620+1{,}442\cdot\RER(t)}, \label{eq:cho-final}\\[4pt]
+  \fat(t) &= E(t)\cdot\frac{1{,}695-1{,}701\cdot\RER(t)}{3{,}620+1{,}442\cdot\RER(t)}. \label{eq:fat-final}
+\end{align}
+
+Aquestes fórmules valen entre $\RER\approx0{,}704$ i $0{,}9965$. Fora d'aquest rang, els
+extrems es posen a zero (secció~\ref{sec:jw-rer}) i es fa servir~\eqref{eq:k}. La quantitat
+d'energia ve de Garmin, i el \RER\ determina com es reparteix.
+
+\begin{requadre}{«Principi de conservació de l'energia Garmin»}
+\textbf{Què es comprova:} que es compleix la condició amb què s'ha construït el mètode
+(secció~\ref{sec:objectiu}): l'energia dels grams calculats és exactament l'energia que ha
+donat Garmin.
+
+\smallskip
+Multiplicant cada ritme per la seva energia per gram i sumant:
+\begin{equation}
+\begin{aligned}
+  e_{\CHO}\cdot\cho(t)+e_{\FAT}\cdot\fat(t)
+  &=\VO(t)\cdot\Bigl(e_{\CHO}\cdot g_{\CHO}\bigl(\RER(t)\bigr)+e_{\FAT}\cdot g_{\FAT}\bigl(\RER(t)\bigr)\Bigr)\\
+  &=\frac{E(t)}{k\bigl(\RER(t)\bigr)}\cdot k\bigl(\RER(t)\bigr)=E(t) .
+\end{aligned}
+  \label{eq:conservacio}
+\end{equation}
+\textbf{Resultat:} es compleix exactament, sigui quin sigui el \RER, també als extrems on
+un dels dos valors $g$ és zero.
+
+\smallskip
+Passa perquè $k$ s'ha calculat amb els mateixos nombres que les equacions de Jeukendrup i
+Wallis. No justifica els valors 4,1 i 9,3 (es compliria amb qualsevol parell de valors, si
+$k$ es calcula amb els mateixos), però garanteix que la quantitat d'energia sempre és la de
+Garmin, i que el mètode només la reparteix entre els dos substrats. Amb una $k$ fixa o
+amb la de Weir, el consum d'oxigen seria pràcticament el mateix, però l'energia dels grams
+no quadraria amb la de Garmin (diferències de fins a un 4\,\% i un 1,5\,\%).
+\end{requadre}
+
+% =====================================================================
+\section{Estudi de l'error en funció del RER}\label{sec:sensibilitat}
+% =====================================================================
+
+El \RER\ s'estima a partir de la \FC, i el valor real de cada persona pot ser una mica
+diferent (secció~\ref{sec:limitacions}). Aquesta secció estudia com canvien els grams
+calculats quan el \RER\ varia una quantitat $\varepsilon$, amb l'energia $E$ fixada (la de
+Garmin). Per simplificar, no escrivim la dependència de $t$.
+
+Les fórmules~\eqref{eq:cho-final}--\eqref{eq:fat-final} tenen la forma
+\[
+  \cho(\RER)=E\cdot\frac{a\cdot\RER-b}{k(\RER)},\qquad
+  \fat(\RER)=E\cdot\frac{a'-b'\cdot\RER}{k(\RER)},\qquad
+  k(\RER)=c+d\cdot\RER,
+\]
+amb $a=4{,}210$, $b=2{,}962$, $a'=1{,}695$, $b'=1{,}701$, $c=3{,}620$ i $d=1{,}442$.
+
+\paragraph{Variació exacta.} Si el \RER\ passa de $\RER$ a $\RER+\varepsilon$:
+\begin{equation}
+\begin{aligned}
+  \Delta\cho&=\cho(\RER+\varepsilon)-\cho(\RER)
+  =E\cdot\left(\frac{a\,(\RER+\varepsilon)-b}{k(\RER+\varepsilon)}-\frac{a\cdot\RER-b}{k(\RER)}\right)\\[4pt]
+  &=\frac{(a\,c+b\,d)\cdot E\cdot\varepsilon}{k(\RER)\cdot k(\RER+\varepsilon)}
+  =\frac{19{,}51\cdot E\cdot\varepsilon}{k(\RER)\cdot k(\RER+\varepsilon)} ,
+\end{aligned}
+\label{eq:dcho}
+\end{equation}
+i, de la mateixa manera,
+\begin{equation}
+  \Delta\fat=-\frac{(b'c+a'd)\cdot E\cdot\varepsilon}{k(\RER)\cdot k(\RER+\varepsilon)}
+  =-\frac{8{,}60\cdot E\cdot\varepsilon}{k(\RER)\cdot k(\RER+\varepsilon)} .
+\label{eq:dfat}
+\end{equation}
+Al numerador, els termes amb \RER\ se cancel·len. La variació és proporcional a
+$\varepsilon$ i a l'energia $E$, i el \RER\ només hi apareix a través de $k$, que varia poc.
+
+L'energia total no canvia: $4{,}1\cdot19{,}51\approx9{,}3\cdot8{,}60\approx80$, de manera
+que l'energia que guanyen els carbohidrats és la que perd el greix. És el «principi de
+conservació de l'energia Garmin»~\eqref{eq:conservacio}.
+
+\paragraph{Aproximació.} Per a variacions petites, $k(\RER+\varepsilon)\approx k(\RER)$:
+\[
+  \Delta\cho\approx\frac{19{,}51}{k(\RER)^2}\cdot E\cdot\varepsilon,\qquad
+  \Delta\fat\approx-\frac{8{,}60}{k(\RER)^2}\cdot E\cdot\varepsilon .
+\]
+L'error d'aquest pas és molt petit: menys de l'1,5\,\% fins i tot amb $\varepsilon=0{,}05$.
+
+\paragraph{Fita.} Dins del rang vàlid del \RER\ (0,704--0,9965), $k$ va de 4,63 a 5,06
+(taula~\ref{tab:sens}).
+
+\begin{table}[H]
+\centering
+\caption{Factors de~\eqref{eq:dcho}--\eqref{eq:dfat} aproximats, als extrems i al mig del
+rang vàlid del \RER.}
+\label{tab:sens}
+\small
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+\RER & $k$ (kcal/L) & $k^2$ & $\dfrac{19{,}51}{k^2}$ & $\dfrac{8{,}60}{k^2}$ \\[6pt]
+\midrule
+0,704  & 4,63 & 21,5 & 0,91 & 0,40 \\
+0,85   & 4,85 & 23,5 & 0,83 & 0,37 \\
+0,9965 & 5,06 & 25,6 & 0,76 & 0,34 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent El factor dels carbohidrats queda sempre entre 0,76 i 0,91. Prenent el valor del
+mig, 0,83, l'error és com a màxim d'un $\pm9$\,\%. Amb $E$ en kcal/min, i multiplicant per
+60 per passar a g/h:
+\begin{equation}
+  \Delta\cho\approx0{,}83\cdot E\cdot\varepsilon~[\mathrm{g/min}]
+  \approx50\cdot E\cdot\varepsilon~[\mathrm{g/h}],\qquad
+  \Delta\fat\approx-0{,}37\cdot E\cdot\varepsilon~[\mathrm{g/min}]
+  \approx-22\cdot E\cdot\varepsilon~[\mathrm{g/h}].
+\label{eq:dsimple}
+\end{equation}
+
+\paragraph{Exemple.} Amb $E=12$~kcal/min i $\varepsilon=0{,}01$:
+$\Delta\cho\approx50\cdot12\cdot0{,}01=6$~g/h i $\Delta\fat\approx-22\cdot12\cdot0{,}01
+\approx-2{,}6$~g/h. Amb la fórmula exacta~\eqref{eq:dcho} surt 5,9~g/h amb $\RER=0{,}86$ i
+5,6~g/h amb $\RER=0{,}95$. Si el \RER\ real d'una persona és 0,04 diferent de l'estimat, la
+diferència és d'uns 24~g/h de carbohidrats.
+
+\begin{conclusio}
+\begin{itemize}[leftmargin=*]
+  \item La variació dels grams és proporcional a la variació del \RER\ i a l'energia, i
+        gairebé no depèn del valor del \RER.
+  \item \textbf{Regla pràctica: $\Delta\cho\approx50\cdot E\cdot\varepsilon$~g/h i
+        $\Delta\fat\approx-22\cdot E\cdot\varepsilon$~g/h} ($E$ en kcal/min). A 12~kcal/min,
+        cada 0,01 de \RER\ són uns 6~g/h de carbohidrats, i uns 2,6~g/h de greix en sentit
+        contrari.
+  \item L'energia total no canvia: el \RER\ només determina com es reparteix.
+  \item Per això el que més importa és tenir els llindars, sobretot $LT_2$, ben posats.
+\end{itemize}
+\end{conclusio}
+
+% =====================================================================
+\section{Càlcul de \texorpdfstring{$\mathit{CHO}_{\mathrm{total}}$ i $\mathit{FAT}_{\mathrm{total}}$}{CHO total i FAT total}}\label{sec:total}
+% =====================================================================
+
+L'objectiu~\eqref{eq:totals} demana el total acumulat, és a dir, la integral dels ritmes al
+llarg de l'activitat. Aquesta secció explica com es calcula amb les dades que dona Garmin.
+
+\subsection{Garmin dona l'energia acumulada}
+Garmin no dona el ritme $E(t)$, sinó l'energia acumulada $E_{\tot}(t)$~\eqref{eq:etotal},
+com un nombre enter de quilocalories que puja d'una en una \citep{garminciq}. En activitats
+reals amb un rellotge Garmin s'ha comprovat que:
+\begin{itemize}
+  \item el comptador és l'energia \emph{total} (repòs inclòs): el seu valor final coincideix
+        amb el total de l'activitat;
+  \item puja d'1~kcal cada vegada, a intervals que depenen de la intensitat (cada
+        5--7~s corrent);
+  \item no avança amb el cronòmetre aturat.
+\end{itemize}
+Es pot llegir, juntament amb la \FC, aproximadament un cop per segon.
+
+\subsection{Intervals entre pujades}
+Cada vegada que el comptador puja, tanca un interval $j$, entre els instants $t_{j-1}$ i
+$t_j$, amb una energia
+\begin{equation}
+  \Delta E_j=E_{\tot}(t_j)-E_{\tot}(t_{j-1})=\int_{t_{j-1}}^{t_j}E(t)\,dt .
+  \label{eq:deltaE}
+\end{equation}
+És la integral de l'energia en aquell interval, i no l'hem de calcular: la dona el comptador
+de Garmin. Normalment val 1~kcal.
+
+\paragraph{Els grams de cada interval.} Són la integral del ritme~\eqref{eq:cho-final} en
+aquell interval:
+\[
+  \Delta\cho_j=\int_{t_{j-1}}^{t_j}\cho(t)\,dt
+  =\int_{t_{j-1}}^{t_j}E(t)\cdot\frac{g_{\CHO}\bigl(\RER(t)\bigr)}{k\bigl(\RER(t)\bigr)}\,dt .
+\]
+L'interval dura uns 5~s, i hi prenem el \RER\ constant, igual a la mitjana dels \RER\ de cada
+segon (figura~\ref{fig:comptador}):
+\[
+  \RERi_j=\frac{\sum_i\RER_i\cdot\Delta t_i}{\sum_i\Delta t_i} .
+\]
+Llavors $g_{\CHO}/k$ és un nombre fix i surt fora de la integral. La integral que queda és la
+de l'energia, que és $\Delta E_j$~\eqref{eq:deltaE}:
+\begin{align}
+  \Delta\cho_j &\approx\frac{g_{\CHO}(\RERi_j)}{k(\RERi_j)}\cdot\int_{t_{j-1}}^{t_j}E(t)\,dt
+  =\Delta E_j\cdot\frac{g_{\CHO}(\RERi_j)}{k(\RERi_j)}, \label{eq:interval}\\
+  \Delta\fat_j &\approx\Delta E_j\cdot\frac{g_{\FAT}(\RERi_j)}{k(\RERi_j)} . \notag
+\end{align}
+L'única aproximació és prendre el \RER\ constant durant uns segons. Com que els intervals són
+tan curts, gairebé no canvia el resultat.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.82\textwidth, height=4.6cm,
+  xmin=0, xmax=24, ymin=99.4, ymax=104.7,
+  xlabel={temps (s)}, ylabel={$E_{\tot}(t)$ (kcal)},
+  ytick={100,101,102,103,104},
+  tick label style={font=\small}, label style={font=\small},
+  grid=major, grid style={gray!20}]
+\addplot[const plot, very thick, black] coordinates {
+ (0,100) (3,101) (8,102) (13,103) (18,104) (24,104)};
+\draw[dashed, red!70!black, thick] (axis cs:1,99.4) -- (axis cs:1,104.7);
+\node[font=\scriptsize, red!70!black, anchor=north west, align=left] at (axis cs:1.2,104.6) {primera\\lectura};
+\draw[{Stealth}-{Stealth}, blue!70!black] (axis cs:1,100.5) -- (axis cs:3,100.5);
+\node[font=\scriptsize, blue!70!black, anchor=south] at (axis cs:2,100.55) {parcial};
+\draw[{Stealth}-{Stealth}, blue!70!black] (axis cs:3,101.5) -- (axis cs:8,101.5);
+\node[font=\scriptsize, blue!70!black, anchor=south] at (axis cs:5.5,101.55) {interval $j$};
+\draw[{Stealth}-{Stealth}, blue!70!black] (axis cs:8,102.5) -- (axis cs:13,102.5);
+\node[font=\scriptsize, blue!70!black, anchor=south] at (axis cs:10.5,102.55) {interval $j+1$};
+\end{axis}
+\end{tikzpicture}
+\caption{Comptador d'energia acumulada de Garmin. Cada pujada d'1~kcal tanca un interval,
+l'energia del qual es reparteix amb~\eqref{eq:interval} i el \RER\ mitjà de l'interval. La
+primera lectura cau en un punt qualsevol entre dues pujades, de manera que el primer
+interval és parcial.}
+\label{fig:comptador}
+\end{figure}
+
+\subsection{Totals}
+Els totals~\eqref{eq:totals} són la integral de tota l'activitat, que és la suma de les
+integrals de cada interval:
+\begin{equation}
+  \cho_{\tot}(T)=\int_0^T\cho(t)\,dt=\sum_j\int_{t_{j-1}}^{t_j}\cho(t)\,dt=\sum_j\Delta\cho_j ,
+\end{equation}
+i igual per al greix. Garmin fa la integral de l'energia per nosaltres; només cal sumar els
+trossos.
+Pel «principi de conservació de l'energia Garmin»~\eqref{eq:conservacio}, aplicat a cada
+interval,
+\begin{equation}
+  e_{\CHO}\cdot\cho_{\tot}(T)+e_{\FAT}\cdot\fat_{\tot}(T)=E_{\tot}(T)-E_{\tot}(t_0):
+\end{equation}
+l'energia repartida és exactament la que ha comptat Garmin des de la primera lectura $t_0$,
+sense cap error de suma. Si durant una estona no es llegeix el comptador, no es perd
+energia: la pujada següent ja la inclou. L'energia que el comptador ja portava a la primera
+lectura no es reparteix. Amb el cronòmetre aturat no s'acumula res.
+
+% =====================================================================
+\section{Exemple}\label{sec:exemple}
+% =====================================================================
+
+Un esportista amb $LT_2=166$~ppm i $\FCmax=180$~ppm corre a 150~ppm, i a partir del
+comptador de Garmin el ritme de despesa és $E=12$~kcal/min.
+\begin{enumerate}
+  \item \textbf{\RER}~\eqref{eq:rer}: $LT_1=0{,}89\cdot166=147{,}7$~ppm, de manera que
+        \[
+          \RER=0{,}91+\frac{150-147{,}7}{166-147{,}7}\cdot(0{,}98-0{,}91)=0{,}919 .
+        \]
+  \item \textbf{Grams per litre}~\eqref{eq:gc}--\eqref{eq:gf}:
+        $g_{\CHO}=4{,}210\cdot0{,}919-2{,}962=0{,}906$~g/L i
+        $g_{\FAT}=1{,}695-1{,}701\cdot0{,}919=0{,}132$~g/L.
+  \item \textbf{Energia per gram}~\eqref{eq:e}: $e_{\CHO}=4{,}1$ i $e_{\FAT}=9{,}3$~kcal/g.
+  \item \textbf{Energia per litre}~\eqref{eq:k}:
+        $k=4{,}1\cdot0{,}906+9{,}3\cdot0{,}132=4{,}944$~kcal/L.
+  \item \textbf{Consum d'oxigen}~\eqref{eq:vo2}: $\VO=12/4{,}944=2{,}43$~L/min.
+  \item \textbf{Ritme d'oxidació}: $\cho=2{,}43\cdot0{,}906=2{,}20$~g/min
+        i $\fat=2{,}43\cdot0{,}132=0{,}32$~g/min, és a dir, 132~g/h de carbohidrats i
+        19~g/h de greix.
+\end{enumerate}
+Condició de partida~\eqref{eq:conservacio}: $4{,}1\cdot2{,}198+9{,}3\cdot0{,}321=12{,}00$~kcal/min.
+
+% =====================================================================
+\section{Fonts d'error i limitacions}\label{sec:limitacions}
+% =====================================================================
+
+La taula~\ref{tab:errors} recull les fonts d'error, classificades segons si afecten la
+quantitat d'energia o el seu repartiment.
+
+\begin{table}[H]
+\centering
+\caption{Fonts d'error del mètode.}
+\label{tab:errors}
+\small
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.6cm} L >{\raggedright\arraybackslash}p{2.4cm}@{}}
+\toprule
+Font & Descripció & Afecta \\
+\midrule
+Energia de Garmin & Càlcul del fabricant, amb errors coneguts en dispositius
+portables \citep{shcherbina2017,fuller2020}; depèn del perfil de l'usuari (pes, edat,
+\FC\ màxima, $\VOmax$). & Quantitat (i grams, en la mateixa proporció) \\
+\RER\ estimat & Valors típics de població; cada persona pot variar uns $\pm0{,}04$
+\citep{goedecke2000}; depèn dels llindars, sobretot de $LT_2$. & Repartiment \\
+Durada de l'esforç & El \RER\ real baixa a mesura que avança l'esforç
+\citep{rothschild2022}; el model no ho té en compte. & Repartiment (CHO sobreestimat a
+partir de la segona hora) \\
+Dieta, dejú, nivell & El dejú o una dieta baixa en carbohidrats baixen el \RER; vegeu
+\citep{chofatfc2026}. & Repartiment \\
+Proteïna & Les equacions no tenen en compte l'oxidació de proteïnes
+\citep{frayn1983,jeukendrup2005}: la seva energia, petita, s'atribueix a carbohidrats i
+greixos. & Repartiment (petit) \\
+Glucòlisi anaeròbica & Per sobre de $LT_2$ es consumeix glicogen que no apareix a
+l'oxidació calculada a partir dels gasos. & Repartiment (CHO subestimat) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+El repartiment no es pot ajustar amb cap dada de Garmin, perquè Garmin no diu res sobre
+carbohidrats i greixos. Per validar-lo cal una prova d'esforç amb analitzador de gasos.
+L'energia, en canvi, és tan bona com l'estimació de Garmin: si aquesta millora, el resultat
+millora sense canviar res.
+
+% =====================================================================
+\section{Estimació del consum mitjà de CHO en temps real}\label{sec:implementacio}
+% =====================================================================
+
+\paragraph{Què volem.} Una estimació en temps real de quants grams de carbohidrats per hora
+s'estan oxidant, que doni més pes als últims minuts.
+
+\paragraph{El problema.} Els grams arriben a salts. A cada pujada d'1~kcal (cada 5~s,
+més o menys) entren de cop els grams de l'interval~\eqref{eq:interval}, i entre pujades no
+n'entra cap. El ritme de cada segon és zero o un pic, i no serveix com a estimació.
+
+\paragraph{Primera idea: la mitjana de tota l'activitat.} Dividir el total de grams pel
+temps. És estable, però al cap d'una hora gairebé no es mou quan canvia la intensitat. Té
+sentit com a resum al final de l'activitat.
+
+\paragraph{La solució: una mitjana que pesa més els últims minuts.} Es fa servir una
+mitjana mòbil exponencial \citep{hunter1986}. Amb paraules: a cada lectura (un cop per
+segon), el valor anterior perd una petita part del seu pes, $\Delta t/\tau$, i hi entren
+els grams nous dividits per $\tau$. Amb $\tau=15$~min:
+\begin{equation}
+  \bar r_i=\Bigl(1-\frac{\Delta t_i}{\tau}\Bigr)\cdot\bar r_{i-1}+\frac{\Delta\cho_i}{\tau},
+  \label{eq:ema}
+\end{equation}
+on $\bar r_i$ és l'estimació, en g/min (multiplicada per 60, en g/h); $\Delta t_i$ és el
+temps des de la lectura anterior, i $\Delta\cho_i$ els grams assignats en aquesta lectura
+(zero si no hi ha hagut pujada).
+
+\paragraph{Què vol dir $\tau=15$~min.} L'estimació és, a grans trets, el consum dels
+\textbf{últims 15 minuts}, i el que és més recent hi pesa més. És com la ``memòria'' de la
+mitjana: el que ha passat fa 15 minuts encara compta una mica, el de fa 30 minuts molt poc, i
+el de fa 45 minuts pràcticament s'ha oblidat. Per exemple, si es passa d'un ritme suau a un
+de fort, l'estimació no salta de cop: al cap de 15 minuts ja ha fet uns 2/3 del canvi, i al
+cap de 45 minuts gairebé tot.
+
+\paragraph{Per què 15 minuts.} Amb menys temps l'estimació reacciona més de pressa, però
+balla més; amb més temps és més estable, però va endarrerida. 15 minuts és un compromís, i
+és més o menys l'escala de temps en què es decideix quan menjar.
+
+\paragraph{Inici.} El primer interval és parcial (figura~\ref{fig:comptador}), però porta
+una quilocaloria sencera, de manera que el seu ritme pot sortir diverses vegades més alt
+que el real. Si la mitjana comencés amb aquest valor, l'error tardaria molt a desaparèixer.
+Per això, durant el primer minut es fa servir la mitjana real (grams dividits pel temps),
+on aquest error ja queda repartit entre una dotzena d'intervals, i a partir d'aquí la mitjana
+mòbil comença amb aquest valor.
+
+% =====================================================================
+\section{Conclusions}
+% =====================================================================
+
+El punt de partida d'aquest treball és una condició: l'energia dels grams calculats ha de
+ser la que dona Garmin, que fa servir més informació que la \FC\ sola. El mètode no torna a
+calcular l'energia; només la reparteix entre carbohidrats i greix.
+
+Les equacions de Jeukendrup i Wallis calculen el ritme d'oxidació de carbohidrats i greix
+a partir del consum d'oxigen i del \RER. Sense analitzador de gasos, el \RER\ es pot
+estimar amb la \FC, i el consum d'oxigen amb l'energia que dona Garmin: n'hi ha prou de
+dividir-la per l'energia que dona cada litre d'oxigen, $k(\RER)$. Aquesta peça clau es
+calcula amb les mateixes equacions i amb l'energia de cada gram de carbohidrat (4,1~kcal)
+i de greix (9,3~kcal), uns valors que encaixen amb la literatura i amb la calorimetria
+clàssica. Com que $k$ varia poc, el consum d'oxigen surt gairebé només de l'energia. I com
+que es calcula amb els mateixos nombres, l'energia dels grams obtinguts és exactament la de
+Garmin, tant en cada instant com en el total. Al final hi ha dues fonts d'error ben
+separades: la quantitat d'energia, que ve de Garmin, i el repartiment entre carbohidrats i
+greix, que depèn del \RER\ estimat i, sobretot, de si els llindars estan ben posats.
+
+El mètode serviria amb qualsevol dispositiu que doni l'energia total de l'activitat, però
+les comprovacions sobre com es comporta el comptador d'energia s'han fet amb Garmin.
+
+% =====================================================================
+\begin{thebibliography}{99}
+\small
+
+\bibitem[Atwater i Bryant(1900)]{atwater1900}
+Atwater WO, Bryant AP.
+\newblock The availability and fuel value of food materials.
+\newblock \emph{Storrs Agricultural Experiment Station 12th Annual Report}. 1900:73--110.
+
+\bibitem[Firstbeat Technologies(2007)]{firstbeat2007}
+Firstbeat Technologies Ltd.
+\newblock An energy expenditure estimation method based on heart rate measurement.
+\newblock White paper. Jyväskylä: Firstbeat Technologies; 2007.
+
+\bibitem[Frayn(1983)]{frayn1983}
+Frayn KN.
+\newblock Calculation of substrate oxidation rates in vivo from gaseous exchange.
+\newblock \emph{J Appl Physiol}. 1983;55(2):628--634.
+
+\bibitem[Fuller et~al.(2020)]{fuller2020}
+Fuller D, Colwell E, Low J, et~al.
+\newblock Reliability and validity of commercially available wearable devices for
+  measuring steps, energy expenditure, and heart rate: systematic review.
+\newblock \emph{JMIR Mhealth Uhealth}. 2020;8(9):e18694.
+
+\bibitem[Garmin(2026)]{garminciq}
+Garmin Ltd.
+\newblock Connect IQ SDK 9.2.0, documentació de l'API: \texttt{Toybox.Activity.Info}.
+  2026.
+
+\bibitem[Goedecke et~al.(2000)]{goedecke2000}
+Goedecke JH, St~Clair Gibson A, Grobler L, Collins M, Noakes TD, Lambert EV.
+\newblock Determinants of the variability in respiratory exchange ratio at rest and during
+  exercise in trained athletes.
+\newblock \emph{Am J Physiol Endocrinol Metab}. 2000;279(6):E1325--E1334.
+
+\bibitem[Hunter(1986)]{hunter1986}
+Hunter JS.
+\newblock The exponentially weighted moving average.
+\newblock \emph{J Qual Technol}. 1986;18(4):203--210.
+
+
+\bibitem[Jeukendrup(2014)]{jeukendrup2014}
+Jeukendrup AE.
+\newblock A step towards personalized sports nutrition: carbohydrate intake during
+  exercise.
+\newblock \emph{Sports Med}. 2014;44(Suppl 1):S25--S33.
+
+\bibitem[Jeukendrup i Wallis(2005)]{jeukendrup2005}
+Jeukendrup AE, Wallis GA.
+\newblock Measurement of substrate oxidation during exercise by means of gas
+  exchange measurements.
+\newblock \emph{Int J Sports Med}. 2005;26(Suppl 1):S28--S37.
+
+\bibitem[Livesey i Elia(1988)]{livesey1988}
+Livesey G, Elia M.
+\newblock Estimation of energy expenditure, net carbohydrate utilization, and net fat
+  oxidation and synthesis by indirect calorimetry: evaluation of errors with special
+  reference to the detailed composition of fuels.
+\newblock \emph{Am J Clin Nutr}. 1988;47(4):608--628.
+
+\bibitem[Péronnet i Massicotte(1991)]{peronnet1991}
+Péronnet F, Massicotte D.
+\newblock Table of nonprotein respiratory quotient: an update.
+\newblock \emph{Can J Sport Sci}. 1991;16(1):23--29.
+
+\bibitem[Projecte CHO/FAT Metabolic Pro(2026)]{chofatfc2026}
+Projecte CHO/FAT Metabolic Pro.
+\newblock Estimació de l'oxidació de carbohidrats i greixos a partir de la freqüència
+  cardíaca. 2026.
+\newblock \webprojecte
+
+\bibitem[Rothschild et~al.(2022)]{rothschild2022}
+Rothschild JA, Kilding AE, Stewart T, Plews DJ.
+\newblock Factors influencing substrate oxidation during submaximal cycling: a modelling
+  analysis.
+\newblock \emph{Sports Med}. 2022;52(11):2775--2795.
+
+\bibitem[Shcherbina et~al.(2017)]{shcherbina2017}
+Shcherbina A, Mattsson CM, Waggott D, et~al.
+\newblock Accuracy in wrist-worn, sensor-based measurements of heart rate and energy
+  expenditure in a diverse cohort.
+\newblock \emph{J Pers Med}. 2017;7(2):3.
+
+\bibitem[Swain i Leutholtz(1997)]{swain1997}
+Swain DP, Leutholtz BC.
+\newblock Heart rate reserve is equivalent to \%VO$_2$ reserve, not to
+  \%VO$_2$max.
+\newblock \emph{Med Sci Sports Exerc}. 1997;29(3):410--414.
+
+\bibitem[Weir(1949)]{weir1949}
+Weir JB de V.
+\newblock New methods for calculating metabolic rate with special reference to
+  protein metabolism.
+\newblock \emph{J Physiol}. 1949;109(1--2):1--9.
+
+\end{thebibliography}
+
+\end{document}

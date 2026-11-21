@@ -1,11 +1,16 @@
 # How the CHO/FAT Metabolic Pro app works
 
-This document explains how the data field is implemented, referencing the
-theoretical basis described in
-[`01-theoretical-basis.md`](01-theoretical-basis.md) and the source code in
-[`source/CHOFATView.mc`](../source/CHOFATView.mc). It does not repeat the
-scientific justification for each formula (that is already in document 01) — it
-focuses on how the code is organized and why each engineering decision was made.
+This document explains how the data field is implemented, referencing the theoretical
+basis and the source code in [`source/CHOFATView.mc`](https://github.com/irazuzta/ChoFatMetabolic/blob/master/source/CHOFATView.mc). It
+does not repeat the scientific justification for each formula — it focuses on how the
+code is organized and why each engineering decision was made.
+
+- **From version 1.0** the energy comes from Garmin and the app only splits it between
+  carbohydrate and fat: [Theoretical basis (HR + Garmin energy)](04-theoretical-basis-garmin-energy.md).
+- **Up to version 0.5** the whole calculation came from HR alone. That model is still
+  used as a **fallback** when Garmin gives no energy (§3.4):
+  [Theoretical basis (HR model)](01-theoretical-basis.md).
+
 
 ## 1. What it is and how it integrates with Garmin
 
@@ -25,9 +30,19 @@ updates at two different moments:
 
 ## 2. Resolving the physiological profile (`carregarPerfil()`)
 
-When the data field is created, the 6 physiological parameters that feed the
-model (weight, resting HR, max HR, LT2, LT1, VO2max) are resolved. For each one, the
-priority is:
+When the data field is created, the physiological parameters are resolved. Since
+version 1.0 they do not all play the same role:
+
+| Parameter | Used for | How important |
+|---|---|---|
+| $HR_{max}$, $LT_2$ (and $LT_1$ if known) | RER from HR → the split between CHO and fat | **Key** in every mode |
+| Weight, resting HR, $VO_{2max}$ | $VO_2$ from HR, only in the fallback mode (§3.4) | Only if Garmin gives no energy |
+
+The energy itself comes from Garmin, which computes it with the user profile on the
+device (weight, age, maximum HR, $VO_{2max}$). So keeping the **Garmin profile and HR
+zones up to date** is what matters most.
+
+For each parameter, the priority is:
 
 1. **Manual value** (`Properties`, in `resources/settings/properties.xml`) if the
    user has entered one > 0.
@@ -48,73 +63,124 @@ current sport (`UserProfile.getCurrentSport()`), so on an Edge bike computer it
 correctly reads the **cycling** zones, not the running ones. Note that with
 Garmin's default %HRmax zones the zone 4 ceiling is simply 90% of HRmax: close to
 the population-average LT2 (about 90.6% of HRmax in recreational runners; Nuuttila
-et al., 2025) but not a measurement. Zones built on a measured lactate threshold
-line up much better. At the end of
-`carregarPerfil()` there is a coherence check: if `HRmax` does not end up above
-`HRrest`, or if `LT2` does not end up in between, it is corrected automatically
-(absurd values are never allowed to silently break the HRR/RER calculation later
-on).
+et al., 2025) but not a measurement. **Zones built on a measured lactate threshold
+(%LTHR) line up much better**, and since $LT_2$ decides the split, this is the single
+most useful thing a user can set up. At the end of `carregarPerfil()` there is a
+coherence check: if `HRmax` does not end up above `HRrest`, or if `LT2` does not end
+up in between, it is corrected automatically (absurd values are never allowed to
+silently break the RER calculation later on).
 
-The automatic `VO2max` is also sport-aware: Garmin stores running VO2max
-(`profile.vo2maxRunning`) and cycling VO2max (`profile.vo2maxCycling`)
-separately — the app picks one or the other depending on whether the current
-sport is `UserProfile.HR_ZONE_SPORT_BIKING` (a real bug found while testing Edge support:
-always reading `vo2maxRunning` meant an Edge would always fall back to the
-default value, since a bike computer never produces a running VO2max). If the
-sport-specific value is missing (common for cyclists without a power meter), the
-other one is used before falling back to the default.
+The automatic `VO2max` (fallback mode only) is sport-aware: Garmin stores running
+VO2max (`profile.vo2maxRunning`) and cycling VO2max (`profile.vo2maxCycling`)
+separately — the app picks one or the other depending on whether the current sport is
+`UserProfile.HR_ZONE_SPORT_BIKING`. If the sport-specific value is missing (common for
+cyclists without a power meter), the other one is used before falling back to the
+default.
 
-When an activity ends (`onTimerReset()`), the accumulated state (grams, EMA,
-active time) is cleared and the profile is read again, so the next activity
-does not inherit anything from the previous one. The session average CHO is
-computed over the time actually accumulated, which stays consistent with the
-grams even after a sensor dropout or a mid-activity restart.
+The "onset of exercise" point $I_{onset}$ is always calculated as a fraction of `lt2`,
+with the constant `PCT_ACTIVACIO_CHO = 0.70` — it has no laboratory equivalent, so it
+is not offered as a manual value. $LT_1$, on the other hand, is a real physiological
+threshold that an athlete may know from their own testing: if the user enters a manual
+value (`lt1Manual`, property > 0) and it is coherent (above `fcRepos` and above the
+CHO-onset point `0.70 * lt2`, and below `lt2`), it is used directly; if not, it is
+silently discarded and the estimate `PCT_LT1 * lt2` (`PCT_LT1 = 0.89`) is used.
 
-The "onset of exercise" point $I_{onset}$ (theoretical document §6) is always
-calculated as a fraction of `lt2`, with the constant `PCT_ACTIVACIO_CHO = 0.70` —
-it has no laboratory equivalent, so it is not offered as a manual value (§6 of
-the theoretical document).
-
-$LT_1$, on the other hand, is a real physiological threshold that an athlete may
-know from their own testing, so it follows the same pattern as the rest of the
-profile: if the user enters a manual value (`lt1Manual`, property > 0) and it is
-coherent (above `fcRepos` and above the CHO-onset point `0.70 * lt2`, and below
-`lt2`), it is used directly; if not, it is silently discarded and the estimate
-`PCT_LT1 * lt2` (`PCT_LT1 = 0.89`) is used instead.
+When an activity ends (`onTimerReset()`), all the accumulated state (grams, EMA,
+active time, energy counter, fallback flag) is cleared and the profile is read again,
+so the next activity does not inherit anything from the previous one.
 
 ## 3. Calculation cycle (`compute()`)
 
-For each valid sample (with HR available):
+`compute(info)` runs about once per second. It only reads three values from
+`Activity.Info` — the timer time, the cumulative energy (`info.calories`) and the
+current HR — and passes them to `processa()`, which holds all the logic (this split
+also lets the unit tests feed it synthetic data).
 
-1. **Time control**: `dtMs` is calculated since the last sample. If `dtMs <= 0`
-   (activity paused) or `dtMs` exceeds `DT_MAX_MS` (5000 ms — typically an
-   optical sensor dropout), the sample is discarded instead of accumulating
-   anything. This prevents a sensor dropout of, say, 90 seconds, from being
-   applied retroactively with the instantaneous rate at the moment of
-   reconnection over the whole gap (a real bug found and fixed during
-   development, and validated against a real `.FIT` file with a genuine sensor
-   dropout).
-2. **Current HR zone** (`zonaFCActual`): determined by comparing HR against the
-   `zonesFC` thresholds (saved in `carregarPerfil()`), for the small Z1-Z5
-   indicator.
-3. **HRR → VO2** and **RER by zones** → grams of CHO/FAT per minute, following
-   exactly the formulas described in the theoretical document (§3-7). The
-   reference constants live at the top of the class: `RER_BASAL = 0.86`,
-   `RER_LT1 = 0.91`, `RER_LT2 = 0.98`, `RER_MAX = 1.00`, `PCT_LT1 = 0.89` and
-   `PCT_ACTIVACIO_CHO = 0.70`; the theoretical document explains where they come
-   from (§5.1, §6) and for whom they are calibrated (§10). HRR is clamped to the
-   0-1 range and negative CHO/FAT rates are floored at 0.
-4. **Accumulation**: `totalChoGrams` and `totalFatGrams` add the grams from this
-   tick (the discretization of the CHO_total/FAT_total integral, see theoretical
-   document §8.2).
-5. **Exponential moving average** (`choAvgEmaGH`): this is the specific smoothing
-   technique this app uses for the displayed rate (theoretical document §8.3 —
-   which technique and with what parameters is an implementation decision, not
-   part of the model). It is updated with `alpha_tick = dtMin / TAU_EMA_MIN`
-   (τ=15 min). The first valid sample initializes the EMA directly with the
-   instantaneous value (it does not start at 0 and climb slowly).
+### 3.1. Every tick: time and RER
 
-### Saving results to the activity file (`FitContributor`)
+1. **Time control**: `dtMs` is calculated since the last sample. If `dtMs <= 0` the
+   timer is stopped (pause, or before the activity starts) and nothing accumulates.
+2. **Valid HR**: a sample has valid HR if `currentHeartRate` is not null and
+   `dtMs <= DT_MAX_MS` (5000 ms; a longer gap is typically an optical sensor dropout).
+3. **Current HR zone** (`zonaFCActual`), for the small Z1–Z5 indicator.
+4. **RER from HR** (`rerPerFc()`): the piecewise interpolation with the constants at
+   the top of the class: `RER_BASAL = 0.86`, `RER_LT1 = 0.91`, `RER_LT2 = 0.98`,
+   `RER_MAX = 1.00`, `PCT_LT1 = 0.89`, `PCT_ACTIVACIO_CHO = 0.70`.
+
+### 3.2. Garmin energy mode (normal)
+
+`info.calories` is the **total** energy of the activity (resting included), as an
+integer that goes up 1 kcal at a time (every ~5–7 s when running). The app does not
+try to turn it into a per-second rate; it works with the **interval between two
+increments** (theoretical basis §7):
+
+**Open interval.** While the counter does not change, each tick adds to the current
+interval: its duration, and the RER weighted by time (`intRerMin`, `intMinFc`, only
+ticks with valid HR).
+
+**Closing an interval.** When the counter goes up by $\Delta E$ kcal, the interval
+closes. With the mean RER of the interval, $\overline{RER}$:
+
+$$g_{CHO} = 4.210\cdot\overline{RER} - 2.962 \qquad g_{FAT} = 1.695 - 1.701\cdot\overline{RER} \qquad (\text{each floored at } 0)$$
+
+$$\text{litres of O}_2 = \frac{\Delta E}{4.1\cdot g_{CHO} + 9.3\cdot g_{FAT}} \qquad \Delta CHO = \text{litres}\cdot g_{CHO} \qquad \Delta FAT = \text{litres}\cdot g_{FAT}$$
+
+(`KCAL_G_CHO = 4.1`, `KCAL_G_FAT = 9.3`). By construction
+$4.1\cdot\Delta CHO + 9.3\cdot\Delta FAT = \Delta E$: the grams always add up to
+exactly Garmin's energy.
+
+**Special cases:**
+
+- **First reading**: the first value of the counter is only a **base**. The energy
+  Garmin had already counted (for example, if the data field is added mid-activity)
+  is not split.
+- **No valid HR in an interval**: the last valid RER is used, because Garmin's energy
+  for that time is still real. If there has never been valid HR, the increment only
+  moves the base.
+- **Pauses**: if Garmin counts energy while the timer is stopped, it is not split; the
+  base just moves on.
+- **Counter going down** (should not happen): it becomes a new base, never negative
+  grams.
+
+### 3.3. Displayed rate: `CHO avg (g/h)`
+
+In Garmin mode the grams arrive in jumps (zero most seconds, a spike at each
+increment), so a per-second rate is useless on its own. The displayed value is an
+**exponential moving average** with τ = 15 min (`TAU_EMA_MIN`), updated each tick with
+`alpha_tick = dtMin / TAU_EMA_MIN` (theoretical basis §10).
+
+The first interval is partial (the field starts reading at some point between two
+increments) but carries a whole kilocalorie, so its rate can be several times too
+high. That is why, **during the first minute** of active time (`EMA_INIT_MS = 60000`),
+the field shows the real mean (total grams / time), and only then does the EMA start,
+from that value.
+
+### 3.4. Fallback mode: the HR model
+
+If Garmin gives no energy, the field computes exactly as version 0.5 did, from HR alone
+([HR model](01-theoretical-basis.md)): %HRR → $VO_2$ (weight, resting HR, $VO_{2max}$),
+RER from HR, and the Jeukendrup & Wallis equations, accumulating `rate × dt` each
+second. It switches to fallback when:
+
+- `info.calories` is `null` (the device or the situation does not provide it), or
+- the counter **has not moved for 120 s** with the timer running
+  (`CAL_STALL_MS = 120000`).
+
+In fallback mode, ticks without valid HR accumulate nothing (as in 0.5). When the
+counter comes back (or changes for the first time after being stuck), that value is a
+**new base**: the energy counted meanwhile is not split again, so nothing is counted
+twice. The final version shows the usual `Z1`–`Z5` indicator in both modes; the active
+mode is not shown on screen.
+
+### 3.5. Accumulation
+
+- `totalChoGrams` and `totalFatGrams` add the grams of each tick (zero most ticks in
+  Garmin mode, the interval's grams when it closes).
+- `tempsActiuMs` counts the active time used for the session mean (`cho_avg_gh`). In
+  Garmin mode it also counts seconds without HR, because their energy is included.
+
+
+### 3.6. Saving results to the activity file (`FitContributor`)
 
 At the end of every `compute()` cycle the app writes six custom fields into the
 activity's `.FIT` file through `Toybox.FitContributor` (permission
@@ -206,7 +272,7 @@ consumption, which is the same regardless of which data field is shown.
 
 The `CHO avg (g/h)` value is colored with `colorPerCho(value, sessionMinutes)`.
 The thresholds compare the CHO oxidation rate with how much carbohydrate a person
-can realistically absorb while exercising (theoretical document §9: about 60 g/h
+can realistically absorb while exercising ([HR model](01-theoretical-basis.md) §9: about 60 g/h
 from a single source, up to about 90 g/h with multiple-transportable carbohydrates):
 
 | Elapsed time | Green | Orange | Red |
@@ -228,7 +294,7 @@ effort intensity.
 
 ## 6. Development tools
 
-[`tools/Run-Simulator.ps1`](../tools/Run-Simulator.ps1) automates building and
+[`tools/Run-Simulator.ps1`](https://github.com/irazuzta/ChoFatMetabolic/blob/master/tools/Run-Simulator.ps1) automates building and
 launching the app in the Connect IQ simulator: it auto-detects the active SDK (by
 reading `current-sdk.cfg`), lets you pick the device (interactive menu or
 `-Device <id>`), and reuses the simulator if one is already open.
@@ -259,18 +325,28 @@ sideloading from a local file.
 
 ## 8. Known limitations
 
-- The model is an approximation based exclusively on HR, calibrated for
-  recreational-to-trained athletes on a normal mixed diet in a fed state
-  (theoretical document §10). It does not capture the effect of duration (RER
-  tends to fall as the effort goes on, so CHO is increasingly overestimated in
-  long sessions), nor diet, fasting, sex, heat or cardiac drift. Elite or
+- **The amount of energy is Garmin's estimate.** It is as good as Garmin's
+  calculation and the user profile on the device (weight, age, maximum HR,
+  $VO_{2max}$); wearables have known errors in energy expenditure. If Garmin's
+  estimate improves, the result improves without changing anything in the app.
+- **The split between CHO and fat is the app's own estimate, and it has not been
+  validated** against a gas analyser. It depends on the RER estimated from HR,
+  calibrated for recreational-to-trained athletes on a normal mixed diet in a fed
+  state ([HR model](01-theoretical-basis.md) §10). It does not capture the effect of
+  duration (RER tends to fall as the effort goes on, so CHO is increasingly
+  overestimated in long sessions), nor diet, fasting, sex or heat. Elite or
   fat-adapted athletes will see CHO overestimated and untrained people
-  underestimated. Treat the numbers as an indication of order of magnitude and
-  trends, not as a measurement.
+  underestimated. As a rule of thumb, at 12 kcal/min each 0.01 of RER error is about
+  6 g/h of CHO ([theoretical basis](04-theoretical-basis-garmin-energy.md) §6). Treat
+  the numbers as an indication of order of magnitude and trends, not as a
+  measurement.
 - `HRmax` and `LT2` are estimates based on configured HR zones, not direct
   measurements — their accuracy depends on how the user (or Garmin) has
   configured those zones. With Garmin's default %HRmax zones, the zone 4 ceiling is
-  just 90% of HRmax.
+  just 90% of HRmax. Since they decide the split, this is the main thing to get
+  right.
+- In the fallback mode (§3.4) the energy also comes from HR, as in version 0.5, and
+  tends to be higher than Garmin's.
 - Results are saved in the activity (custom FIT fields) and shown by Garmin
   Connect after syncing, but services that ignore developer fields (e.g. Strava)
   will not display them; the values are still in the `.FIT` file.
