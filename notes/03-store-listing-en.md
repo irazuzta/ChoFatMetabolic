@@ -4,17 +4,24 @@ Draft text for the app's public Store page (Connect IQ Developer Portal). This i
 user-facing copy — no code or internal implementation details. Paste the relevant
 sections into the corresponding fields when submitting the app.
 
-## Store name (version 1.0)
+## Store name (from version 1.0.1)
 
-The current name ("CHO/FAT Metabolic Pro") has none of the words people search for
-("carbs", "fat", "burn"). Proposals, best first:
+The name keeps "Pro", like the name on the watch (`@Strings.AppName`, "CHO/FAT
+Metabolic Pro") and the Store images ("METABOLIC PRO"), and adds the words people
+search for ("carbs", "fat", "burned"). Best first:
 
-1. `CHO/FAT Metabolic – Carbs & Fat Burned` (38 characters)
-2. `CHO/FAT Metabolic: Carbs & Fat` (30 characters) — if the form does not accept 38.
+1. `CHO/FAT Metabolic Pro – Carbs & Fat Burned` (42 characters)
+2. `CHO/FAT Metabolic Pro: Carbs & Fat` (34 characters) — if the form does not accept 42.
 
-The exact limit is not documented; check it in the developer portal form. Other Store
-apps use names of at least 34 characters. The name shown on the watch
-(`@Strings.AppName`) can stay "CHO/FAT Metabolic Pro".
+Version 1.0.0 was published as `CHO/FAT Metabolic – Carbs & Fat Burned` (38
+characters, accepted by the portal). The exact limit is not documented.
+
+## Store images
+
+- `store-assets/cover_image.png` (500×500): Store icon.
+- `store-assets/hero_image.png` (1440×720): header image, shown in the Connect IQ
+  phone app (not on the Store website).
+- Editable sources in `store-assets/source/`.
 
 ## Short description (tagline)
 
@@ -85,7 +92,14 @@ rate, plus total CHO, total FAT and average CHO in the activity summary.
 **Want the details?** User guide, theory and papers:
 https://irazuzta.github.io/ChoFatMetabolic/
 
-## What's New (version 1.0.0 — this version)
+## What's New (version 1.0.1 — this version)
+
+```
+New app icon. No other changes: same calculations, screen, settings and data
+saved in Garmin Connect as version 1.0.0.
+```
+
+## What's New (version 1.0.0)
 
 ```
 New energy model. The calories now come from your Garmin watch itself - the same
