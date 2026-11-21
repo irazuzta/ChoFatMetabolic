@@ -6,7 +6,7 @@ site_description = "Technical documentation for the CHO/FAT Metabolic Pro data f
 repo_url = "https://github.com/irazuzta/ChoFatMetabolic"
 repo_name = "irazuzta/ChoFatMetabolic"
 edit_uri = "edit/master/docs/"
-copyright = "Licensed under GPLv3"
+copyright = "© 2026 Jordi Irazuzta · Code: <a href=\"https://github.com/irazuzta/ChoFatMetabolic/blob/master/LICENSE\">GPLv3</a> · Documentation and papers: <a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>"
 
 nav = [
   { "Home" = "index.md" },

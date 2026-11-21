@@ -50,3 +50,7 @@ is calibrated for, and how to read the numbers, see the [user guide](03-user-gui
 |---|---|---|
 | Estimating carbohydrate and fat oxidation from heart rate and Garmin's energy estimate (1.0) | [PDF](paper/model-fc-energia.en.pdf) | [PDF](paper/model-fc-energia.ca.pdf) |
 | Estimating carbohydrate and fat oxidation from heart rate (up to 0.5) | [PDF](paper/model-fc.en.pdf) | [PDF](paper/model-fc.ca.pdf) |
+
+© 2026 Jordi Irazuzta. The papers and this documentation are licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): you may share and adapt them,
+as long as you give appropriate credit.

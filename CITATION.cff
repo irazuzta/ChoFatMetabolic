@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this model or software, please cite it as below."
+title: "CHO/FAT Metabolic Pro: estimating carbohydrate and fat oxidation from heart rate and Garmin's energy estimate"
+abstract: >-
+  Garmin Connect IQ data field and open model that estimate, in real time, the
+  oxidation of carbohydrate and fat during exercise. The energy comes from the
+  watch's own estimate; it is split between carbohydrate and fat with a
+  respiratory exchange ratio estimated from heart rate and the Jeukendrup &
+  Wallis (2005) equations.
+type: software
+authors:
+  - family-names: Irazuzta
+    given-names: Jordi
+version: "1.0.1"
+date-released: "2026-11-21"
+license: GPL-3.0-only
+repository-code: "https://github.com/irazuzta/ChoFatMetabolic"
+url: "https://irazuzta.github.io/ChoFatMetabolic/"
+keywords:
+  - substrate oxidation
+  - carbohydrate
+  - fat oxidation
+  - respiratory exchange ratio
+  - heart rate
+  - Garmin
+  - Connect IQ
+  - sports nutrition

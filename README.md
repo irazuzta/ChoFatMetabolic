@@ -67,5 +67,14 @@ calories. Requires `pip install fitparse matplotlib numpy`.
 
 ## License
 
-Licensed under the [GNU General Public License v3.0](LICENSE) — see `LICENSE` for
-the full text.
+© 2026 Jordi Irazuzta.
+
+- **Code** (`source/`, `resources/`, `tools/`): [GNU General Public License v3.0](LICENSE).
+- **Documentation and papers** (`docs/`, including the PDFs in `docs/paper/`):
+  [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+  You may share and adapt them, also commercially, as long as you give appropriate
+  credit.
+
+## How to cite
+
+See [`CITATION.cff`](CITATION.cff) (GitHub shows a "Cite this repository" button).
