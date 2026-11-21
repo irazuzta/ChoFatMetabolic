@@ -10,12 +10,15 @@ your watch or Edge — no power meter, no extra account, no payment.
 
 ## How it works, in two lines
 
-- **How much energy** you spend comes from **Garmin**, the same calories you see in
-  Garmin Connect. Keep your Garmin profile (weight, age, maximum HR) and your HR zones
-  up to date.
-- **How that energy is split** between carbohydrate and fat is the app's own estimate,
-  based on your heart rate and your thresholds. It follows published science, but it
-  has not been validated with a gas analyser: treat it as a guide, not a measurement.
+- **How much energy** you burn: **Garmin's own estimate**, the same calories you see in
+  Garmin Connect.
+- **Where it comes from**: the field splits that energy between carbohydrate and fat
+  with a continuous model based on your heart rate and your thresholds, built on
+  published exercise-physiology equations. The grams always add up to exactly
+  Garmin's calories.
+
+Nothing to set up if your Garmin profile and HR zones are up to date. For who the model
+is calibrated for, and how to read the numbers, see the [user guide](03-user-guide.md).
 
 ## What's new in 1.0
 
