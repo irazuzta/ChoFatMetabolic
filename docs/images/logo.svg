@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <clipPath id="esq"><rect x="0" y="0" width="128" height="256"/></clipPath>
+    <clipPath id="dre"><rect x="128" y="0" width="128" height="256"/></clipPath>
+    <path id="flama" d="M212 160 C214 112 172 92 170 50 C156 64 150 80 152 98 C138 74 140 40 130 12 C96 42 74 90 96 142 C82 132 68 116 66 88 C50 110 44 136 44 164 C44 212 84 242 128 242 C176 242 212 212 212 168 Z"/>
+    <linearGradient id="gv" gradientUnits="userSpaceOnUse" x1="0" y1="20" x2="0" y2="240">
+      <stop offset="0" stop-color="#1f5fd6"/><stop offset="1" stop-color="#3fa9f5"/></linearGradient>
+    <linearGradient id="go" gradientUnits="userSpaceOnUse" x1="0" y1="20" x2="0" y2="240">
+      <stop offset="0" stop-color="#e8731a"/><stop offset="1" stop-color="#ffb02e"/></linearGradient>
+    <linearGradient id="gvn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fd0ff"/><stop offset="1" stop-color="#d6efff"/></linearGradient>
+    <linearGradient id="gon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd04a"/><stop offset="1" stop-color="#fff0a8"/></linearGradient>
+    <radialGradient id="llumc" cx="0.5" cy="0.72" r="0.55">
+      <stop offset="0" stop-color="#ff9a2e" stop-opacity="0.38"/>
+      <stop offset="0.6" stop-color="#ff9a2e" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#ff9a2e" stop-opacity="0"/></radialGradient>
+    <radialGradient id="nit" cx="0.5" cy="0.62" r="0.62"><stop offset="0" stop-color="#22305a"/><stop offset="0.7" stop-color="#121a33"/><stop offset="1" stop-color="#0b1022"/></radialGradient>
+  </defs>
+  
+  <g transform="translate(128 132) scale(0.92) translate(-128 -132)">
+    <use href="#flama" fill="url(#gv)" clip-path="url(#esq)"/>
+    <use href="#flama" fill="url(#go)" clip-path="url(#dre)"/>
+    <g transform="translate(128 236) scale(0.62) translate(-128 -236)">
+      <use href="#flama" fill="url(#gvn)" clip-path="url(#esq)"/>
+      <use href="#flama" fill="url(#gon)" clip-path="url(#dre)"/>
+    </g>
+    <polygon points="103,192 115,199 115,213 103,220 91,213 91,199" fill="none"
+             stroke="#141826" stroke-width="6.5" stroke-linejoin="round"/>
+    <circle cx="115" cy="199" r="6.5" fill="#141826"/>
+    <polyline points="141,226 158,216 141,206 158,196 141,186 158,176" fill="none"
+              stroke="#141826" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round"/>
+  </g>
+</svg>

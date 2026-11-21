@@ -18,6 +18,8 @@ nav = [
   { "How the app works" = "02-app-implementation.md" },
 ]
 
+extra_css = ["stylesheets/extra.css"]
+
 extra_javascript = [
   "javascripts/mathjax.js",
   "https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js",
@@ -26,7 +28,8 @@ extra_javascript = [
 [project.theme]
 # variant = "classic"
 # custom_dir = "overrides"
-# favicon = "images/favicon.png"
+favicon = "images/favicon.png"
+logo = "images/logo.svg"
 language = "en"
 features = [
   "announce.dismiss",
@@ -57,7 +60,6 @@ features = [
   # "toc.integrate",
 ]
 
-# logo = "assets/logo.png"
 
 # [project.theme.icon]
 # logo = "lucide/smile"

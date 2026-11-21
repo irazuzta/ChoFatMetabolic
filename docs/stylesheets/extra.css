@@ -1,0 +1,20 @@
+/* Títol present per a cercadors i lectors de pantalla, però no visible
+   (la capçalera en imatge ja mostra el nom). */
+.md-typeset h1.titol-ocult {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Imatge de capçalera de la pàgina d'inici */
+.md-typeset img.capcalera {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+}

@@ -1,4 +1,6 @@
-# CHO/FAT Metabolic Pro
+# CHO/FAT Metabolic Pro { .titol-ocult }
+
+![CHO/FAT Metabolic Pro — Carbs & fat burned in real time](images/hero.jpg){ .capcalera }
 
 Technical documentation for the **CHO/FAT Metabolic Pro** data field for Garmin Connect
 IQ: it estimates carbohydrate and fat oxidation in real time during exercise, using only
