@@ -4,91 +4,103 @@ Draft text for the app's public Store page (Connect IQ Developer Portal). This i
 user-facing copy — no code or internal implementation details. Paste the relevant
 sections into the corresponding fields when submitting the app.
 
+## Store name (version 1.0)
+
+The current name ("CHO/FAT Metabolic Pro") has none of the words people search for
+("carbs", "fat", "burn"). Proposals, best first:
+
+1. `CHO/FAT Metabolic – Carbs & Fat Burned` (38 characters)
+2. `CHO/FAT Metabolic: Carbs & Fat` (30 characters) — if the form does not accept 38.
+
+The exact limit is not documented; check it in the developer portal form. Other Store
+apps use names of at least 34 characters. The name shown on the watch
+(`@Strings.AppName`) can stay "CHO/FAT Metabolic Pro".
+
 ## Short description (tagline)
 
-> Real-time carb & fat burn tracking with science-based fueling guidance.
+> Carbs & fat burned in real time, from your watch's own calories and heart rate.
 
-(74 characters — check the exact character limit in the submission form, as Garmin
-may adjust it over time.)
+(79 characters — check the exact limit in the submission form.)
 
 ## Long description
 
-**Fuel smarter, not by guesswork.**
+**Your watch tells you how much energy you burn. This field estimates where it comes
+from.**
 
-CHO/FAT Metabolic Pro is a Data Field that estimates, second by second, how many grams of
-carbohydrate and fat your body is burning during exercise — using only your heart
-rate. No extra sensors, no manual logging. Works on watches and Edge bike computers.
+CHO/FAT Metabolic Pro is a Data Field that shows, in real time, how many grams of
+carbohydrate and fat you are burning during exercise — using only your watch or Edge.
+No power meter, no extra sensors, no account, no subscription, no manual logging.
 
 **What you see on screen**
 - **CHO (g)** — total carbohydrate burned so far this session.
-- **CHO avg (g/h)** — a smoothed, real-time carbohydrate burn rate, color-coded as a
-  fueling guide: green, orange, or red depending on how your current burn rate
-  compares to how much carbohydrate you can realistically absorb while exercising
-  (about 60 g/h, up to about 90 g/h with multiple-transportable carbs).
+- **CHO avg (g/h)** — how fast you are burning carbohydrate right now (roughly the
+  last 15 minutes), color-coded as a fueling guide: green, orange or red depending on
+  how your burn rate compares to how much carbohydrate you can realistically absorb
+  while exercising (about 60 g/h, up to about 90 g/h with multiple-transportable carbs).
 - **FAT (g)** — total fat burned so far this session.
 - A small **zone indicator (Z1-Z5)**, colored the same way Garmin Connect colors your
-  heart rate zones, so you can see effort and fueling status at a glance.
+  heart rate zones.
 
-**Built on established exercise science**
-
-The underlying model is not a gimmick — it combines well-known methods from exercise
-physiology:
-- Heart-rate-based VO2 estimation (heart rate reserve method).
-- The classic Frayn equations for calculating carbohydrate and fat oxidation from
-  gas-exchange variables.
-- Carbohydrate fueling thresholds based on published sports-nutrition guidelines for
-  endurance exercise.
+**How it works**
+- **How much energy**: Garmin's own estimate — the same calories you see in Garmin
+  Connect. Carbohydrate and fat always add up to exactly that number.
+- **How it is split** between carbohydrate and fat: a continuous model based on your
+  heart rate and your metabolic thresholds, using the Jeukendrup & Wallis equations
+  from exercise physiology. Not a fixed percentage per zone: the split changes smoothly
+  as your intensity changes.
+- The full method is open: documentation and papers (English and Catalan) explain every
+  formula and reference.
 
 **Works out of the box**
 
-The app automatically reads your weight, resting heart rate, and heart rate zones
-from your Garmin profile to personalize the calculation. If you know your own
-physiological numbers (max heart rate, aerobic and lactate thresholds, VO2max), you
-can enter them manually in the app settings for even more accurate results.
+There is nothing to set up if your Garmin profile and heart rate zones are right:
+- Your **heart rate zones** decide the split. For best results, set them up with the
+  **Lactate Threshold** method (%LTHR) instead of %HRmax: the app reads your lactate
+  threshold (LT2) from the top of zone 4.
+- Your **Garmin profile** (weight, age, max HR) decides the calories, so keep it up to
+  date.
+- Cyclists on an Edge: Garmin does not auto-detect lactate threshold for cycling. Set
+  cycling zones based on your lactate threshold heart rate, or enter your LT2 in the
+  app settings (the heart rate of your FTP test effort is a good value).
 
-Tip: for best accuracy, set up your Garmin heart rate zones using the **Lactate
-Threshold** method instead of %HRmax — modern Garmin watches estimate your lactate
-threshold automatically during running/cycling activities (or you can enter it
-manually). This app estimates your anaerobic threshold from your zone 4 ceiling, so
-zones based on lactate threshold line up much more closely with the real value.
-
-**Why your anaerobic threshold (LT2) matters most — especially for cyclists**
-
-Of all the numbers the app uses, your anaerobic/lactate threshold (LT2) has by far
-the biggest impact on accuracy. The app's whole carb/fat curve is anchored to it:
-your aerobic threshold and the point where carb burning starts ramping up are both
-calculated as a percentage of LT2, not set independently.
-
-This matters even more if you ride with an Edge: Garmin auto-detects lactate
-threshold for running, but not for cycling — the automatic cycling equivalent is
-FTP, a power number, not a heart rate. So if you're a cyclist, it's worth setting
-LT2 manually: use the heart rate from your FTP test (the steady effort, not the
-wattage itself), or your cycling Lactate Threshold Heart Rate from Garmin
-Connect's Physiological Metrics if you've set one.
+If you know your own thresholds (LT1, LT2, max HR), you can enter them in the app
+settings.
 
 **A note on accuracy**
 
-This app provides an estimate based on established exercise science models. It is
-calibrated for recreational-to-trained endurance athletes (roughly VO2max 45-60)
-eating a normal mixed diet and training after a meal. If you train fasted, follow a
-low-carb or ketogenic diet, or are an elite athlete, it will tend to overestimate
-carbohydrate burn; if you are untrained, to underestimate it. Long sessions, heat and
-dehydration also push the estimate up. It is a training aid, not a medical or
-diagnostic device, and should not replace professional medical or nutritional advice.
-
-Tip: the estimate is most reliable for steady effort once you are warmed up. In the
-first minutes of an effort and in very long sessions the real fuel mix shifts, so read
-the numbers as a guide rather than a measurement.
+The energy is Garmin's estimate: if it is off, it is also off in Garmin Connect. The
+split between carbohydrate and fat is this app's own estimate, based on published
+science but not validated with a gas analyser. It is calibrated for
+recreational-to-trained endurance athletes eating a normal mixed diet and training
+after a meal. If you train fasted, follow a low-carb or ketogenic diet, or are an elite
+athlete, it will tend to overestimate carbohydrate burn; if you are untrained, to
+underestimate it. In very long sessions it also tends to overestimate it. Read the
+numbers as a guide, not as a lab measurement. It is a training aid, not a medical or
+diagnostic device.
 
 **Review it after your workout.** The results are saved in the activity: once your
-watch syncs, Garmin Connect shows charts of accumulated CHO, accumulated FAT and
-CHO rate, plus total CHO, total FAT and average CHO in the activity summary.
+watch syncs, Garmin Connect shows charts of accumulated CHO, accumulated FAT and CHO
+rate, plus total CHO, total FAT and average CHO in the activity summary.
 
-**Want the details?** Full documentation — a plain-language user guide plus the
-underlying science and references — is available at
+**Want the details?** User guide, theory and papers:
 https://irazuzta.github.io/ChoFatMetabolic/
 
-## What's New (version 0.5.0 — this version)
+## What's New (version 1.0.0 — this version)
+
+```
+New energy model. The calories now come from your Garmin watch itself - the same
+calories you see in Garmin Connect - and the app splits them between carbohydrate
+and fat with its heart-rate model. Carbohydrate and fat always add up to exactly
+Garmin's calories. Before, the app estimated the energy from heart rate alone and it
+usually came out higher than Garmin's, so CHO figures are now somewhat lower (about
+5-10% in our tests). If Garmin gives no calories, the field automatically uses the
+previous heart-rate model. Your HR zones (ideally based on lactate threshold) and
+your Garmin profile matter most; weight and VO2max in the app settings are now only
+used as a fallback. No changes to the screen, the settings or the data saved in
+Garmin Connect. New documentation and papers on the website.
+```
+
+## What's New (version 0.5.0)
 
 ```
 Improved carbohydrate/fat estimate for athletes on a normal diet. The previous
